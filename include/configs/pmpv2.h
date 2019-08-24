@@ -147,7 +147,7 @@
 #define CFG_NAND_BLOCK_SIZE	(128 << 10)	/* NAND chip block size		*/
 
 #ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
+#define CFG_ENV_SIZE	        0x10000	
 #define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_OFFS + CFG_NAND_U_BOOT_SIZE + CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
 #define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
 #endif

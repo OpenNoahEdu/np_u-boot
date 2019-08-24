@@ -35,6 +35,9 @@
 #define CONFIG_LCD		 /* LCD support */
 //#define CONFIG_SLCD                 /* LCD support */
 
+//#define  CONFIG_SHOW_BOOT_PROGRESS        //add 200901103
+
+
 #ifndef CONFIG_SLCD        /* LCD support */
 #define CONFIG_JZ4750_LCD_AUO_A043FL01V2 
 #endif
@@ -51,7 +54,7 @@
 
 #define CFG_EXTAL		24000000        /* EXTAL freq: 24 MHz */
 
-#define CFG_CPU_SPEED		336000000	/* CPU clock */
+#define CFG_CPU_SPEED		378000000	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL/256) /* incrementer freq */
 
 #define CFG_UART_BASE  		UART1_BASE	/* Base of the UART channel */
@@ -80,7 +83,8 @@
 
 #define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
-#define CONFIG_BOOTARGS		"mem=64M console=ttyS1,57600n8 ip=off root=/dev/mtdblock2 rw"
+//#define CONFIG_BOOTARGS		"mem=64M console=ttyS1,57600n8 ip=off root=/dev/mtdblock2 rw"
+#define CONFIG_BOOTARGS		"mem=64M console=ttyS1,57600n8 ip=off disable_lcd_init=y root=/dev/mtdblock2 rw"
 #define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
@@ -167,12 +171,13 @@
  * Define the partitioning of the NAND chip (only RAM U-Boot is needed here)
  */
 #define CFG_NAND_U_BOOT_OFFS	(32 << 10)	/* Offset to RAM U-Boot image	*/
-#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
+//#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_SIZE	(512 << 11)	/* support 24bit bmp Size of RAM U-Boot image	*/
 
 #ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
+#define CFG_ENV_SIZE	        0x10000	
 #define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_SIZE / CFG_NAND_BLOCK_SIZE * CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
-#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
+//#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
 #endif
 
 /*

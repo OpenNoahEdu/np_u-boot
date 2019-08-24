@@ -150,7 +150,7 @@ static ulong flash_get_size (vu_long *addr, flash_info_t *info)
 	saddr[0x2AAA] = 0x55;
 	saddr[0x5555] = 0xF0;
 
-#if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_MSC_U_BOOT)
+#if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_MSC_U_BOOT) && !defined(CONFIG_SPI_U_BOOT)
 	/* If can't get flash ID because of hardware problem, 
 	   use this code to avoid this error.
 	   But it is not recommended. */

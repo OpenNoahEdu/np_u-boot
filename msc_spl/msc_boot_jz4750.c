@@ -51,6 +51,28 @@ do {						\
 	REG_MSC_IREG = 0xffff;			\
 } while (0)
 
+/* This function will delay sdelay ms*/
+static void sd_mdelay(int sdelay)
+{
+	__tcu_set_count(0,0);
+	__tcu_disable_pwm_output(0);
+	__tcu_select_rtcclk(0);
+	__tcu_select_clk_div1(0);
+
+	__tcu_mask_half_match_irq(0); 
+	__tcu_mask_full_match_irq(0);
+
+	REG_TCU_TDFR(0) = 32; // 1 ms 
+	__tcu_start_counter(0);
+
+	while(1) {
+		if(REG_TCU_TCNT(0) > sdelay)
+			break;
+	}
+	__tcu_stop_counter(0);
+	__tcu_stop_timer_clock(0);
+}
+
 /* Stop the MMC clock and wait while it happens */
 static inline int jz_mmc_stop_clock(void)
 {
@@ -194,13 +216,11 @@ static void sd_init(void)
 	while (retries-- && resp && !(resp[4] & 0x80)) {
 		resp = mmc_cmd(55, 0, 0x1, MSC_CMDAT_RESPONSE_R1);
 		resp = mmc_cmd(41, 0x40ff8000, 0x3, MSC_CMDAT_RESPONSE_R3);
-		wait = 33600000; // mdelay(100);
-		while (wait--)
-			;
+		sd_mdelay(10);
 	}
 
 	if (resp[4] & 0x80) 
-		serial_puts("SD init ok\n");
+		serial_puts("MMC/SD init ok\n");
 	else 
 		serial_puts("SD init fail\n");
 
@@ -241,9 +261,7 @@ int  mmc_init(void)
 		retries = 100;
 		while (retries-- && resp && !(resp[4] & 0x80)) {
 			resp = mmc_cmd(1, 0x40300000, 0x3, MSC_CMDAT_RESPONSE_R3);
-			wait = 33600000; // mdelay(100);
-			while (wait--)
-				;
+			sd_mdelay(10);
 		}
 
 		if (resp[4]== 0x80) 
@@ -305,7 +323,7 @@ static int mmc_load(int uboot_size, u8 *dst)
 	return 0;
 }
 
-void nand_boot(void)
+void spl_boot(void)
 {
 	void (*uboot)(void);
 

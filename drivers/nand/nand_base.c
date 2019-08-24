@@ -102,7 +102,7 @@ static struct nand_oobinfo nand_oob_8 = {
 
 static struct nand_oobinfo nand_oob_16 = {
 	.useecc = MTD_NANDECC_AUTOPLACE,
-	.eccbytes = 6,
+	.eccbytes = 7,
 	.eccpos = {0, 1, 2, 3, 6, 7},
 	.oobfree = { {8, 8} }
 };
@@ -2760,6 +2760,7 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 			busw = nand_flash_ids[i].options & NAND_BUSWIDTH_16;
 		}
 
+#if 0 /* Don't check buswidth, since the buswidth information couldn't be read from extid for some nand. */
 		/* Check, if buswidth is correct. Hardware drivers should set
 		 * this correct ! */
 		if (busw != (this->options & NAND_BUSWIDTH_16)) {
@@ -2773,6 +2774,7 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 			this->select_chip(mtd, -1);
 			return 1;
 		}
+#endif
 
 		/* Calculate the address shift from the page size */
 		this->page_shift = ffs(mtd->oobblock) - 1;
@@ -2815,6 +2817,9 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 	if (!nand_flash_ids[i].name) {
 		printk (KERN_WARNING "No NAND device found!!!\n");
 		this->select_chip(mtd, -1);
+		printk ( "NAND device: Manufacturer ID:"
+			 " 0x%02x, Chip ID: 0x%02x not known!\n", nand_maf_id, nand_dev_id);
+
 		return 1;
 	}
 

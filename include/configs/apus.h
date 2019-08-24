@@ -118,6 +118,18 @@
 
 #define CFG_RX_ETH_BUFFER	16	/* use 16 rx buffers on jz47xx eth */
 
+/*
+ * Configurable options for zImage if SPL is to load zImage instead of u-boot.
+ */
+#define CONFIG_LOAD_UBOOT       /* If it's defined, then spl load u-boot instead of zImage, and following options isn't used */
+#define PARAM_BASE		0x80004000      /* The base of parameters which will be sent to kernel zImage */
+#define CFG_ZIMAGE_SIZE	        (2 << 20)	/* Size of kernel zImage */
+#define CFG_ZIMAGE_DST	        0x80100000	/* Load kernel zImage to this addr */
+#define CFG_ZIMAGE_START	CFG_ZIMAGE_DST	/* Start kernel zImage from this addr	*/
+#define CFG_CMDLINE		CONFIG_BOOTARGS
+#define CFG_NAND_ZIMAGE_OFFS	(CFG_NAND_BLOCK_SIZE*4) /* NAND offset of zImage being loaded */
+#define CFG_SPI_ZIMAGE_OFFS	(256 << 10) /* NAND offset of zImage being loaded */
+
 /*-----------------------------------------------------------------------
  * Environment
  *----------------------------------------------------------------------*/
@@ -172,9 +184,9 @@
 #define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
 
 #ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
+#define CFG_ENV_SIZE		0x10000 //CFG_NAND_BLOCK_SIZE
 #define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_SIZE / CFG_NAND_BLOCK_SIZE * CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
-#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
+//#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
 #endif
 
 /*
@@ -207,6 +219,15 @@
 #define CFG_ENV_SIZE		CFG_MSC_BLOCK_SIZE
 #define CFG_ENV_OFFSET		((CFG_MSC_BLOCK_SIZE * 16) + CFG_MSC_U_BOOT_SIZE + (CFG_MSC_BLOCK_SIZE * 16))	/* environment starts here  */
 #endif
+
+/*-----------------------------------------------------------------------
+ * SPI NOR FLASH configuration
+ */
+#define CFG_SPI_MAX_FREQ        1000000
+#define CFG_SPI_U_BOOT_DST	0x80100000
+#define CFG_SPI_U_BOOT_START	CFG_SPI_U_BOOT_DST
+#define CFG_SPI_U_BOOT_OFFS     (8 << 10)
+#define CFG_SPI_U_BOOT_SIZE	(256 << 10)
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

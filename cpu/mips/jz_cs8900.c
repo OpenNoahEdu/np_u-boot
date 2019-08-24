@@ -364,6 +364,7 @@ int jz_enet_initialize(bd_t *bis)
 	dev->iobase = 0xa8000000;
 
 #elif defined(CONFIG_JZ4750)
+#if !defined(CONFIG_AQUILA)
 #define RD_N_PIN (32*2 +25)
 #define WE_N_PIN (32*2 +26)
 #define CS3_PIN (32*2 +23)
@@ -375,6 +376,7 @@ int jz_enet_initialize(bd_t *bis)
 	reg = (reg & (~EMC_SMCR_BW_MASK)) | EMC_SMCR_BW_16BIT;
 	REG_EMC_SMCR3 = reg;
 	dev->iobase = 0xac000000;
+#endif // !defined(CONFIG_AQUILA)
 #endif
 
 	sprintf(dev->name, "JZ ETHERNET");
@@ -394,7 +396,7 @@ int jz_enet_initialize(bd_t *bis)
 #endif	/* CONFIG_DRIVER_CS8900 */
 #endif  /* defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) */
 
-#if defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 int jz_enet_initialize(bd_t *bis)
 {
 }

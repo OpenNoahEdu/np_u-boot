@@ -18,11 +18,8 @@
 #include <asm/jz4760.h>
 #endif
 
-/* Size of ecc parities per 512 bytes, 7 or 13 bytes */
+/* Size of ecc parities per 512 bytes, in half-byte */
 static int par_size;
-
-/* It indicates share mode between nand and SDRAM Bus */
-static int share_mode = 1;
 
 static struct nand_oobinfo nand_oob_bch = {
 	.useecc = MTD_NANDECC_AUTOPLACE,
@@ -51,40 +48,29 @@ static void jz_hwcontrol(struct mtd_info *mtd, int cmd)
 			break;
 
 		case NAND_CTL_SETCLE:
-			if (share_mode)
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | 0x00008000);
-			else
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | 0x00000008);
+				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | NAND_CMD_OFFSET);
 			break;
 
 		case NAND_CTL_CLRCLE:
-			if (share_mode)
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~0x00008000);
-			else
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~0x00000008);
+				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~NAND_CMD_OFFSET);
 			break;
 
 		case NAND_CTL_SETALE:
-			if (share_mode)
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | 0x00010000);
-			else
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | 0x00000010);
+				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) | NAND_ADDR_OFFSET);
 			break;
 
 		case NAND_CTL_CLRALE:
-			if (share_mode)
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~0x00010000);
-			else
-				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~0x00000010);
+				this->IO_ADDR_W = (void __iomem *)((unsigned long)(this->IO_ADDR_W) & ~NAND_ADDR_OFFSET);
 			break;
 	}
+	/* printk("this->IO_ADDR_W=0x%x:cmd=0x%x\n",this->IO_ADDR_W,cmd); */
 }
 
 static int jz_device_ready(struct mtd_info *mtd)
 {
 	int ready;
 	udelay(20);	/* FIXME: add 20us delay */
-	ready = (REG_GPIO_PXPIN(2) & 0x08000000) ? 1 : 0;
+	ready = (REG_GPIO_PXPIN(0) & 0x00100000)? 1 : 0;
 	return ready;
 }
 
@@ -95,7 +81,11 @@ static void jz_device_setup(void)
 {
 	/* Set NFE bit */
 	REG_NEMC_NFCSR |= NEMC_NFCSR_NFE1;
-	REG_NEMC_SMCR1 = 0x0d444400;
+#if CFG_NAND_BW8 == 1
+	REG_NEMC_SMCR1 = CFG_NAND_SMCR1;
+#else /* 16 bit */
+	REG_NEMC_SMCR1 = CFG_NAND_SMCR1 | 0x40;
+#endif
 }
 
 void board_nand_select_device(struct nand_chip *nand, int chip)
@@ -130,7 +120,7 @@ static int jzsoc_nand_calculate_bch_ecc(struct mtd_info *mtd, const u_char * dat
 	__ecc_encode_sync();
 	__ecc_disable();
 
-	for (i = 0; i < par_size; i++) {
+	for (i = 0; i < (par_size+1)/2; i++) {
 		ecc_code[i] = *paraddr++;
 	}
 
@@ -149,9 +139,9 @@ static void jzsoc_nand_enable_bch_hwecc(struct mtd_info* mtd, int mode)
 		else
 			__ecc_decoding_4bit();
 #ifdef CFG_NAND_BCH_WITH_OOB
-		__ecc_cnt_dec(this->eccsize + CFG_NAND_ECC_POS / this->eccsteps + par_size);
+		__ecc_cnt_dec(2*(this->eccsize + CFG_NAND_ECC_POS / this->eccsteps) + par_size);
 #else
-		__ecc_cnt_dec(this->eccsize + par_size);
+		__ecc_cnt_dec(2*this->eccsize + par_size);
 #endif
 	}
 
@@ -161,9 +151,9 @@ static void jzsoc_nand_enable_bch_hwecc(struct mtd_info* mtd, int mode)
 		else
 			__ecc_encoding_4bit();
 #ifdef CFG_NAND_BCH_WITH_OOB
-		__ecc_cnt_enc(this->eccsize + CFG_NAND_ECC_POS / this->eccsteps);
+		__ecc_cnt_enc(2*(this->eccsize + CFG_NAND_ECC_POS / this->eccsteps));
 #else
-		__ecc_cnt_enc(this->eccsize);
+		__ecc_cnt_enc(2*(this->eccsize));
 #endif
 	}
 }
@@ -212,7 +202,7 @@ static int jzsoc_nand_bch_correct_data(struct mtd_info *mtd, u_char * dat, u_cha
 #endif
 
 	/* Write parities to REG_BCH_DR */
-	for (k = 0; k < par_size; k++) {
+	for (k = 0; k < (par_size+1)/2; k++) {
 		REG_BCH_DR = read_ecc[k];
 	}
 
@@ -269,18 +259,13 @@ static int jzsoc_nand_bch_correct_data(struct mtd_info *mtd, u_char * dat, u_cha
  */
 void board_nand_init(struct nand_chip *nand)
 {
-	if ((REG_NEMC_BCR & NEMC_BCR_BSR_MASK) == NEMC_BCR_BSR_SHARE)
-		share_mode = 1;
-	else
-		share_mode = 0;
-
 	jz_device_setup();
 
 	if (CFG_NAND_BCH_BIT == 8) {
-		par_size = 13;
+		par_size = 26;
 		nand->eccmode = NAND_ECC_HW13_512;
 	} else {
-		par_size = 7;
+		par_size = 13;
 		nand->eccmode = NAND_ECC_HW7_512;
 	}
 
@@ -298,5 +283,11 @@ void board_nand_init(struct nand_chip *nand)
         /* 20 us command delay time */
         nand->chip_delay = 20;
 //	nand->autooob    = &nand_oob_bch; // init in nand_base.c
+
+	nand->options &= ~NAND_BUSWIDTH_16;
+#if CFG_NAND_BW8 == 0
+	nand->options |= NAND_BUSWIDTH_16;
+#endif
+
 }
 #endif /* (CONFIG_COMMANDS & CFG_CMD_NAND) */

@@ -26,24 +26,17 @@
 static void gpio_init(void)
 {
 	/*
-	 * Initialize SDRAM pins
-	 */
-#ifndef CONFIG_DDRC
-#if CONFIG_NR_DRAM_BANKS == 2   /*Use Two Banks SDRAM*/
-	__gpio_as_sdram_x2_16bit();
-#else
-	__gpio_as_sdram_16bit();
-#endif
-#endif
-	/*
 	 * Initialize UART1 pins
 	 */
+#if CFG_UART_BASE == UART0_BASE
 	__gpio_as_uart0();
-
-	/*
-	 * Initialize Ethernet MII pins
-	 */
-	__gpio_as_eth();
+#elif CFG_UART_BASE == UART1_BASE
+	__gpio_as_uart1();
+#elif CFG_UART_BASE == UART2_BASE
+	__gpio_as_uart2();
+#else /* CFG_UART_BASE == UART1_BASE */
+	__gpio_as_uart3();
+#endif
 }
 
 //----------------------------------------------------------------------

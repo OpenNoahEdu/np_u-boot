@@ -45,8 +45,8 @@
 						   mclk=CFG_EXTAL/CFG_DIV, just for FPGA board */
 #define	CFG_HZ			(CFG_EXTAL/256) /* incrementer freq */
 
-#define CFG_UART_BASE  		UART0_BASE	/* Base of the UART channel */
-#define CONFIG_BAUDRATE		9600
+#define CFG_UART_BASE  		UART1_BASE	/* Base of the UART channel */
+#define CONFIG_BAUDRATE		115200
 #define CFG_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 /* allow to overwrite serial and ethaddr */
@@ -65,11 +65,11 @@
 #define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
 #if defined(CONFIG_SDRAM_MDDR)
-#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,9600n8 ip=dhcp nfsroot=192.168.1.4:/nfsroot/root26 rw"
-#elif defined(CONFIG_SDRAM_MDDR)
-#define CONFIG_BOOTARGS		"mem=128M console=ttyS0,9600n8 ip=dhcp nfsroot=192.168.1.4:/nfsroot/root26 rw"
+#define CONFIG_BOOTARGS		"mem=128M console=ttyS0,9600n8 ip=dhcp nfsroot=192.168.3.56:/nfsroot/root26 rw"
+#else
+#define CONFIG_BOOTARGS		"mem=256M console=ttyS0,9600n8 ip=dhcp nfsroot=192.168.3.56:/nfsroot/root26 rw"
 #endif
-#define CONFIG_BOOTCOMMAND	"bootp;setenv serverip 192.168.1.4;tftp;bootm"
+#define CONFIG_BOOTCOMMAND	"bootp;setenv serverip 192.168.3.56;tftp;bootm"
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
 #define CONFIG_NET_MULTI
@@ -105,6 +105,18 @@
 
 #define CFG_RX_ETH_BUFFER	16	/* use 16 rx buffers on jz47xx eth */
 
+/*
+ * Configurable options for zImage if SPL is to load zImage instead of u-boot.
+ */
+#define CONFIG_LOAD_UBOOT       /* If it's defined, then spl load u-boot instead of zImage, and following options isn't used */
+#define PARAM_BASE		0x80004000      /* The base of parameters which will be sent to kernel zImage */
+#define CFG_ZIMAGE_SIZE	        (2 << 20)	/* Size of kernel zImage */
+#define CFG_ZIMAGE_DST	        0x80100000	/* Load kernel zImage to this addr */
+#define CFG_ZIMAGE_START	CFG_ZIMAGE_DST	/* Start kernel zImage from this addr	*/
+#define CFG_CMDLINE		CONFIG_BOOTARGS
+#define CFG_NAND_ZIMAGE_OFFS	(CFG_NAND_BLOCK_SIZE*4) /* NAND offset of zImage being loaded */
+#define CFG_SPI_ZIMAGE_OFFS	(256 << 10) /* NAND offset of zImage being loaded */
+
 /*-----------------------------------------------------------------------
  * Environment
  *----------------------------------------------------------------------*/
@@ -117,17 +129,53 @@
 /*-----------------------------------------------------------------------
  * NAND FLASH configuration
  */
+#if 1 // 4KB 8bit defaultly
+#define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
+#define CFG_NAND_PAGE_SIZE      4096
+#define CFG_NAND_ROW_CYCLE	3     
+#define CFG_NAND_BLOCK_SIZE	(512 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
+#endif
+#if 0
 #define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
 #define CFG_NAND_PAGE_SIZE      2048
 #define CFG_NAND_ROW_CYCLE	3     
 #define CFG_NAND_BLOCK_SIZE	(256 << 10)	/* NAND chip block size		*/
 #define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
-#define CFG_NAND_BCH_BIT        4               /* Specify the hardware BCH algorithm for 4760 (4|8) */
-#define CFG_NAND_ECC_POS        24              /* Ecc offset position in oob area, its default value is 3 if it isn't defined. */
+#endif
+#if 0 //2KB 16bit 
+#define CFG_NAND_BW8		0               /* Data bus width: 0-16bit, 1-8bit */
+#define CFG_NAND_PAGE_SIZE      2048
+#define CFG_NAND_ROW_CYCLE	3     
+#define CFG_NAND_BLOCK_SIZE	(128 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
+#endif
+#if 0
+#define CFG_NAND_BW8		0               /* Data bus width: 0-16bit, 1-8bit */
+#define CFG_NAND_PAGE_SIZE      2048
+#define CFG_NAND_ROW_CYCLE	3     
+#define CFG_NAND_BLOCK_SIZE	(128 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
+#endif
+#if 0 // K9F1208
+#define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
+#define CFG_NAND_PAGE_SIZE      512
+#define CFG_NAND_ROW_CYCLE	3     
+#define CFG_NAND_BLOCK_SIZE	(16 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
+#endif
+
+#define CFG_NAND_BCH_BIT        8               /* Specify the hardware BCH algorithm for 4760 (4|8) */
+#define CFG_NAND_ECC_POS        3               /* Ecc offset position in oob area, its default value is 3 if it isn't defined. */
+#define CFG_NAND_SMCR1          0x0d444400      /* 0x0fff7700 is slowest */
+#define CFG_NAND_USE_PN         0               /* Use PN in jz4760 for TLC NAND */
+#define CFG_NAND_BACKUP_NUM     1               /* TODO */
 
 #define CFG_MAX_NAND_DEVICE     1
 #define NAND_MAX_CHIPS          1
-#define CFG_NAND_BASE           0xB8000000
+#define CFG_NAND_BASE           0xBA000000
+#define NAND_ADDR_OFFSET        0x00800000
+#define NAND_CMD_OFFSET         0x00400000
 #define CFG_NAND_SELECT_DEVICE  1       /* nand driver supports mutipl. chips   */
 
 /*
@@ -151,14 +199,29 @@
 /*
  * Define the partitioning of the NAND chip (only RAM U-Boot is needed here)
  */
-#define CFG_NAND_U_BOOT_OFFS	(32 << 10)	/* Offset to RAM U-Boot image	*/
-#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_OFFS	(CFG_NAND_BLOCK_SIZE * (CFG_NAND_BACKUP_NUM+1))	/* Offset to U-Boot image */
+
+/* Size of U-Boot image */
+#if CFG_NAND_BLOCK_SIZE > (512 << 10)
+#define CFG_NAND_U_BOOT_SIZE    CFG_NAND_BLOCK_SIZE
+#else
+#define CFG_NAND_U_BOOT_SIZE	(512 << 10)
+#endif
 
 #ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
-#define CFG_ENV_OFFSET		(CFG_NAND_BLOCK_SIZE + CFG_NAND_U_BOOT_SIZE + CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
+#define CFG_ENV_SIZE		0x10000
+#define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_OFFS + CFG_NAND_U_BOOT_SIZE)	/* environment starts here  */
 #define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
 #endif
+
+/*-----------------------------------------------------------------------
+ * SPI NOR FLASH configuration
+ */
+#define CFG_SPI_MAX_FREQ        1000000
+#define CFG_SPI_U_BOOT_DST	0x80100000	/* Load NUB to this addr	*/
+#define CFG_SPI_U_BOOT_START	CFG_SPI_U_BOOT_DST
+#define CFG_SPI_U_BOOT_OFFS     (8 << 10)
+#define CFG_SPI_U_BOOT_SIZE	(256 << 10)
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
@@ -204,7 +267,7 @@
 #define SDRAM_RCD		20	/* RAS# to CAS# Delay */
 #define SDRAM_TPC		20	/* RAS# Precharge Time */
 #define SDRAM_TRWL		7	/* Write Latency Time */
-#define SDRAM_TREF	        15625	/* Refresh period: 4096 refresh cycles/64ms */
+#define SDRAM_TREF	        7812	/* Refresh period: 4096 refresh cycles/64ms */
 
 #else /* Mobile SDRAM */
 // SDRAM paramters
@@ -219,7 +282,7 @@
 #define SDRAM_RCD		18	/* RAS# to CAS# Delay */
 #define SDRAM_TPC		20	/* RAS# Precharge Time */
 #define SDRAM_TRWL		7	/* Write Latency Time */
-#define SDRAM_TREF	        64000	/* Refresh period: 4096 refresh cycles/64ms */
+#define SDRAM_TREF	        7812	/* Refresh period: 4096 refresh cycles/64ms */
 #endif /* CONFIG_MOBILE_SDRAM */
 
 #else /* CONFIG_DDRC */
@@ -228,7 +291,7 @@
  * DDR2 info
  */
 /* Chip Select */
-#define DDR_CS1EN 0 // CSEN : whether a ddr chip exists 0 - un-used, 1 - used
+#define DDR_CS1EN 1 // CSEN : whether a ddr chip exists 0 - un-used, 1 - used
 #define DDR_CS0EN 1
 #define DDR_DW32 1 /* 0 - 16-bit data width, 1 - 32-bit data width */
 
@@ -236,11 +299,8 @@
 #if defined(CONFIG_SDRAM_DDR2) // ddr2
 #define DDR_ROW 13 /* ROW : 12 to 14 row address */
 #define DDR_COL 10 /* COL :  8 to 10 column address */
-#define DDR_BANK8		0	/* Banks each chip: 0-4bank, 1-8bank */
-#define DDR_CL 5 /* CAS latency: 3 to 6 */
-#define DDR_Msel 0 /* Mask delay select: 0 to 3 tCK */
-#define DDR_Tsel 1 /* Read delay select: 0 to 3 tCK */
-#define DDR_HL 1 /* 0: no extra delay 1: one extra half tCK delay */
+#define DDR_BANK8 0 /* Banks each chip: 0-4bank, 1-8bank */
+#define DDR_CL 5 /* CAS latency: 1 to 7 */
 
 /*
  * ddr2 controller timing1 register
@@ -252,7 +312,7 @@
 #define DDR_tRC 60 /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD 10   /* ACTIVE bank A to ACTIVE bank B command period. */
 #define DDR_tWR 15 /* WRITE Recovery Time defined by register MR of DDR2 memory */
-#define DDR_tWTR 8 /* WRITE to READ command delay. */
+#define DDR_tWTR 2 /* unit: tCK. WRITE to READ command delay. */
 
 /*
  * ddr2 controller timing2 register
@@ -260,21 +320,18 @@
 #define DDR_tRFC 128 /* ns,  AUTO-REFRESH command period. */
 #define DDR_tMINSR 6 /* Minimum Self-Refresh / Deep-Power-Down */
 #define DDR_tXP 2 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
-#define DDR_tMRD 2 /* Load-Mode-Register to next valid command period: 1 to 4 tCK */
+#define DDR_tMRD 2 /* unit: tCK. Load-Mode-Register to next valid command period: 1 to 4 tCK */
 
 /*
  * ddr2 controller refcnt register
  */
-#define DDR_tREFI	        7800	/* Refresh period: 4096 refresh cycles/64ms */
+#define DDR_tREFI	        7800	/* Refresh period: ns */
 
 #elif defined(CONFIG_SDRAM_MDDR) // ddr1 and mddr
 #define DDR_ROW 13 /* ROW : 12 to 14 row address */
 #define DDR_COL 9 /* COL :  8 to 10 column address */
-#define DDR_BANK8		0	/* Banks each chip: 0-4bank, 1-8bank */
-#define DDR_CL 2 /* CAS latency: 3 to 6 */
-#define DDR_Msel 0 /* Mask delay select: 0 to 3 tCK */
-#define DDR_Tsel 1 /* Read delay select: 0 to 3 tCK */
-#define DDR_HL 0 /* 0: no extra delay 1: one extra half tCK delay */
+#define DDR_BANK8 0 /* Banks each chip: 0-4bank, 1-8bank */
+#define DDR_CL 3 /* CAS latency: 1 to 7 */
 /*
  * ddr2 controller timing1 register
  */
@@ -285,22 +342,43 @@
 #define DDR_tRC 60 /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD 12   /* ACTIVE bank A to ACTIVE bank B command period. */
 #define DDR_tWR 15 /* WRITE Recovery Time defined by register MR of DDR2 memory */
-#define DDR_tWTR 8 /* WRITE to READ command delay. */
-/*
- * ddr2 controller timing2 register
- */
-
-#define DDR_tRFC 80 /* ns,  AUTO-REFRESH command period. */
-#define DDR_tMINSR 6 /* Minimum Self-Refresh / Deep-Power-Down */
-#define DDR_tXP 51 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
-#define DDR_tMRD 50 /* Load-Mode-Register to next valid command period: 1 to 4 tCK */
+#define DDR_tWTR 1 /* WRITE to READ command delay. */
 /*
  * ddr2 controller timing2 register
  */
 #define DDR_tRFC 72 /* ns,  AUTO-REFRESH command period. */
 #define DDR_tMINSR 6 /* Minimum Self-Refresh / Deep-Power-Down */
-#define DDR_tXP 51 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
-#define DDR_tMRD 50 /* Load-Mode-Register to next valid command period: 1 to 4 tCK */
+#define DDR_tXP 3 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
+#define DDR_tMRD 2 /* unit: tCK Load-Mode-Register to next valid command period: 1 to 4 tCK */
+/*
+ * ddr2 controller refcnt register
+ */
+#define DDR_tREFI	        7800	/* Refresh period: 4096 refresh cycles/64ms */
+
+#elif defined(CONFIG_SDRAM_DDR1) // ddr1 and mddr
+#define DDR_ROW 13 /* ROW : 12 to 14 row address */
+#define DDR_COL 10  /* COL :  8 to 10 column address */
+#define DDR_BANK8 0 /* Banks each chip: 0-4bank, 1-8bank */
+#define DDR_CL 1 /* CAS latency: 1 to 7 */
+#define DDR_CL_HALF 0 /*Only for DDR1, Half CAS latency: 0 or 1 */
+/*
+ * ddr2 controller timing1 register
+ */
+#define DDR_tRAS 40 /*tRAS: ACTIVE to PRECHARGE command period to the same bank. */
+#define DDR_tRTP 12 /* 7.5ns READ to PRECHARGE command period. */
+#define DDR_tRP 15 /* tRP: PRECHARGE command period to the same bank */
+#define DDR_tRCD 15 /* ACTIVE to READ or WRITE command period to the same bank. */
+#define DDR_tRC 55 /* ACTIVE to ACTIVE command period to the same bank.*/
+#define DDR_tRRD 10   /* ACTIVE bank A to ACTIVE bank B command period. */
+#define DDR_tWR 15 /* WRITE Recovery Time defined by register MR of DDR2 memory */
+#define DDR_tWTR 2 /* WRITE to READ command delay 2*tCK */
+/*
+ * ddr2 controller timing2 register
+ */
+#define DDR_tRFC 70 /* ns,  AUTO-REFRESH command period. */
+#define DDR_tMINSR 6 /* Minimum Self-Refresh / Deep-Power-Down */
+#define DDR_tXP 2 /* EXIT-POWER-DOWN to next valid command period: 1 to 8 tCK. */
+#define DDR_tMRD 2 /* unit: tCK. Load-Mode-Register to next valid command period: 1 to 4 tCK */
 /*
  * ddr2 controller refcnt register
  */
@@ -308,7 +386,9 @@
 
 #endif
 
-#define DDR_CLK_DIV 64    /* Clock Divider. */
+#define DDR_CLK_DIV 1    /* Clock Divider. auto refresh
+						  *	cnt_clk = memclk/(16*(2^DDR_CLK_DIV))
+						  */
 #endif /* CONFIG_DDRC */
 
 /*-----------------------------------------------------------------------

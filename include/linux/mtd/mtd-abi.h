@@ -89,7 +89,7 @@ struct region_info_user {
 #define MEMGETBADBLOCK		_IOW('M', 11, loff_t)
 #define MEMSETBADBLOCK		_IOW('M', 12, loff_t)
 
-#if !defined(CONFIG_JZ4750) && !defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4730) || defined(CONFIG_JZ4740)
 struct nand_oobinfo {
 	uint32_t useecc;
 	uint32_t eccbytes;
@@ -101,7 +101,7 @@ struct nand_oobinfo {
 	uint32_t useecc;
 	uint32_t eccbytes;
 	uint32_t oobfree[8][2];
-	uint32_t eccpos[104];
+	uint32_t eccpos[104]; /* for bch, it should be larger */
 };
 #endif
 

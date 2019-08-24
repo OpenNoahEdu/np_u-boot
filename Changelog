@@ -1,3 +1,14 @@
+2010-02-03 Wolfgang Wang <lgwang@ingenic.cn>
+
+	Support large DRAM(jz4750>128M, jz4760>256M)
+
+	Changed file:
+	include/asm-mips/jz4750.h
+	include/asm-mips/jz4760.h
+	cpu/mips/jz4760.c
+	cpu/mips/jz4750.c
+	lib_mips/board.c
+
 2009-08-14 Wolfgang Wang <lgwang@ingenic.cn>
 
 	Add macros "CONFIG_JZ4750 CONFIG_JZ4760" control for cmd_msc.c

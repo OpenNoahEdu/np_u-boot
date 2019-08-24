@@ -1653,6 +1653,10 @@ static inline u32 jz_readl(u32 address)
 /*************************************************************************
  * EMC (External Memory Controller)
  *************************************************************************/
+#define EMC_LOW_SDRAM_SPACE_SIZE 0x08000000 /* 128M */
+#define EMC_MEM_PHY_BASE 	0x20000000
+#define EMC_MEM_PHY_BASE_SHIFT 	24
+
 #define EMC_BCR		(EMC_BASE + 0x0)  /* BCR */
 
 #define EMC_SMCR0	(EMC_BASE + 0x10)  /* Static Memory Control Register 0 */

@@ -387,7 +387,7 @@ static int nand_load(int offs, int uboot_size, uchar *dst)
 	return 0;
 }
 
-void nand_boot(void)
+void spl_boot(void)
 {
 	int boot_sel, ret;
 	void (*uboot)(void);

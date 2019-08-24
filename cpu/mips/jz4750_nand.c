@@ -100,7 +100,10 @@ static void jz_device_setup(void)
 {
 	/* Set NFE bit */
 	REG_EMC_NFCSR |= EMC_NFCSR_NFE1;
-	REG_EMC_SMCR1 = 0x0d444400;
+	if (CFG_NAND_BW8 == 0)
+		REG_EMC_SMCR1 = 0x0d444440;  // 16bit bus width
+	else
+		REG_EMC_SMCR1 = 0x0d444400;  // 8bit bus width
 }
 
 void board_nand_select_device(struct nand_chip *nand, int chip)
@@ -303,5 +306,8 @@ void board_nand_init(struct nand_chip *nand)
         /* 20 us command delay time */
         nand->chip_delay = 20;
 //	nand->autooob    = &nand_oob_bch; // init in nand_base.c
+
+	if (CFG_NAND_BW8 == 0)
+		nand->options |= NAND_BUSWIDTH_16;
 }
 #endif /* (CONFIG_COMMANDS & CFG_CMD_NAND) */

@@ -237,13 +237,19 @@ MSC_SPL = msc_spl
 U_BOOT_MSC = $(obj)u-boot-msc.bin
 endif
 
+ifeq ($(CONFIG_SPI_U_BOOT),y)
+SPI_SPL = spi_spl
+U_BOOT_SPI = $(obj)u-boot-spi.bin
+endif
+
 __OBJS := $(subst $(obj),,$(OBJS))
 __LIBS := $(subst $(obj),,$(LIBS))
 
 #########################################################################
 #########################################################################
 
-ALL = $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_MSC)
+ALL = $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) \
+	$(U_BOOT_MSC) $(U_BOOT_SPI)
 
 all:		$(ALL)
 
@@ -292,6 +298,12 @@ $(MSC_SPL):	version
 
 $(U_BOOT_MSC):	$(MSC_SPL) $(obj)u-boot.bin
 		cat $(obj)msc_spl/u-boot-spl-pad.bin $(obj)u-boot.bin > $(obj)u-boot-msc.bin
+
+$(SPI_SPL):	version
+		$(MAKE) -C spi_spl/board/$(BOARDDIR) all
+
+$(U_BOOT_SPI):	$(SPI_SPL) $(obj)u-boot.bin
+		cat $(obj)spi_spl/u-boot-spl-pad.bin $(obj)u-boot.bin > $(obj)u-boot-spi.bin
 
 version:
 		@echo -n "#define U_BOOT_VERSION \"U-Boot " > $(VERSION_FILE); \
@@ -2111,6 +2123,13 @@ f4760_nand_config	:	unconfig
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4760/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
+f4760_spi_config	:	unconfig
+	@echo "#define CONFIG_SPI_U_BOOT" > $(obj)include/config.h
+	@echo "Compile SPI boot image for f4760"
+	@./mkconfig -a f4760 mips mips f4760
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4760/config.tmp
+	@echo "CONFIG_SPI_U_BOOT = y" >> $(obj)include/config.mk
+
 fuwa_config		: 	unconfig
 	@ >include/config.h
 	@echo "#define CONFIG_FUWA 1" >>include/config.h
@@ -2137,6 +2156,25 @@ f4750l_nand_config	:	unconfig
 	@echo "Compile NAND boot image for f4750l"
 	@./mkconfig -a f4750l mips mips f4750l
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4750l/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+volans_config		: 	unconfig
+	@ >include/config.h
+	@echo "#define CONFIG_VOLANS 1" >>include/config.h
+	@./mkconfig -a volans mips mips volans
+
+volans_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for volans"
+	@./mkconfig -a volans mips mips volans
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/volans/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+aquila_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for aquila"
+	@./mkconfig -a aquila mips mips aquila
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/aquila/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
 cetus_nand_config	:	unconfig
@@ -2175,6 +2213,13 @@ apus_msc_config		:	unconfig
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/apus/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "CONFIG_MSC_U_BOOT = y"  >> $(obj)include/config.mk
+
+apus_spi_config	:	unconfig
+	@echo "#define CONFIG_SPI_U_BOOT" > $(obj)include/config.h
+	@echo "Compile SPI boot image for apus"
+	@./mkconfig -a apus mips mips apus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/apus/config.tmp
+	@echo "CONFIG_SPI_U_BOOT = y" >> $(obj)include/config.mk
 
 lib4750_config		: 	unconfig
 	@ >include/config.h
@@ -2527,6 +2572,7 @@ clean:
 	rm -f $(obj)include/bmp_logo.h
 	rm -f $(obj)nand_spl/u-boot-spl $(obj)nand_spl/u-boot-spl.map
 	rm -f $(obj)msc_spl/u-boot-spl $(obj)msc_spl/u-boot-spl.map
+	rm -f $(obj)spi_spl/u-boot-spl $(obj)spi_spl/u-boot-spl.map
 
 clobber:	clean
 	find $(OBJTREE) -type f \( -name .depend \

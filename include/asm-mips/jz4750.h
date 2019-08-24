@@ -1669,6 +1669,11 @@ static inline u32 jz_readl(u32 address)
 /*************************************************************************
  * EMC (External Memory Controller)
  *************************************************************************/
+#define EMC_LOW_SDRAM_SPACE_SIZE 0x08000000 /* 128M */
+#define EMC_MEM_PHY_BASE 	0x20000000
+#define EMC_MEM_PHY_BASE_SHIFT 	24
+
+
 #define EMC_BCR		(EMC_BASE + 0x0)  /* BCR */
 
 #define EMC_SMCR0	(EMC_BASE + 0x10)  /* Static Memory Control Register 0 */
@@ -3107,6 +3112,59 @@ do {		              						\
 		REG_GPIO_PXSELC(2) = 0x00010000;			\
 		REG_GPIO_PXPES(2) = 0x00010000;				\
 	}								\
+	REG_GPIO_PXFUNS(2) = 0x00200000 << ((n)-1); /* CSn */		\
+	REG_GPIO_PXSELC(2) = 0x00200000 << ((n)-1);			\
+	REG_GPIO_PXPES(2) = 0x00200000 << ((n)-1);			\
+									\
+        REG_GPIO_PXFUNS(1) = 0x00080000; /* RDWE#/BUFD# */		\
+        REG_GPIO_PXSELC(1) = 0x00080000;				\
+	REG_GPIO_PXPES(1) = 0x00080000;					\
+	REG_GPIO_PXFUNS(2) = 0x30000000; /* FRE#, FWE# */		\
+	REG_GPIO_PXSELC(2) = 0x30000000;				\
+	REG_GPIO_PXPES(2) = 0x30000000;					\
+	REG_GPIO_PXFUNC(2) = 0x08000000; /* FRB#(input) */		\
+	REG_GPIO_PXSELC(2) = 0x08000000;				\
+	REG_GPIO_PXDIRC(2) = 0x08000000;				\
+	REG_GPIO_PXPES(2) = 0x08000000;					\
+} while (0)
+
+/*
+ * D0 ~ D15, CS1#, CLE, ALE, FRE#, FWE#, FRB#, RDWE#/BUFD#
+ */
+#define __gpio_as_nand_16bit(n)						\
+do {		              						\
+	if (!is_share_mode()) {						\
+		/* unshare mode */					\
+		REG_GPIO_PXFUNS(2) = 0x0000ffff; /* SD0~SD15 */		\
+		REG_GPIO_PXSELC(2) = 0x0000ffff;			\
+		REG_GPIO_PXPES(2) = 0x0000ffff;				\
+		REG_GPIO_PXFUNS(1) = 0x00008000; /* CLE(SA3) */		\
+		REG_GPIO_PXSELS(1) = 0x00008000;			\
+		REG_GPIO_PXPES(1) = 0x00008000;				\
+		REG_GPIO_PXFUNS(2) = 0x00010000; /* ALE(SA4) */		\
+		REG_GPIO_PXSELS(2) = 0x00010000;			\
+		REG_GPIO_PXPES(2) = 0x00010000;				\
+	} else {							\
+		/* share mode */					\
+		if (is_normal_order()) {	              		\
+			/* 32/16-bit data normal order */		\
+			REG_GPIO_PXFUNS(0) = 0x0000ffff; /* D0~D15 */	\
+			REG_GPIO_PXSELC(0) = 0x0000ffff;		\
+			REG_GPIO_PXPES(0) = 0x0000ffff;			\
+		} else {						\
+			/* 16-bit data special order */			\
+			REG_GPIO_PXFUNS(0) = 0x00ffff00; /* D0~D15 */	\
+			REG_GPIO_PXSELC(0) = 0x00ffff00;		\
+			REG_GPIO_PXPES(0) = 0x00ffff00;			\
+		}							\
+		REG_GPIO_PXFUNS(1) = 0x00008000; /* CLE(A15) */		\
+		REG_GPIO_PXSELC(1) = 0x00008000;			\
+		REG_GPIO_PXPES(1) = 0x00008000;				\
+		REG_GPIO_PXFUNS(2) = 0x00010000; /* ALE(A16) */		\
+		REG_GPIO_PXSELC(2) = 0x00010000;			\
+		REG_GPIO_PXPES(2) = 0x00010000;				\
+	}								\
+									\
 	REG_GPIO_PXFUNS(2) = 0x00200000 << ((n)-1); /* CSn */		\
 	REG_GPIO_PXSELC(2) = 0x00200000 << ((n)-1);			\
 	REG_GPIO_PXPES(2) = 0x00200000 << ((n)-1);			\

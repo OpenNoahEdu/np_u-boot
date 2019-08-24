@@ -106,6 +106,52 @@ static void lcd_getcolreg (ushort regno,
 static int lcd_getfgcolor (void);
 #endif	/* NOT_USED_SO_FAR */
 
+#if defined(CONFIG_JZ4750D)
+#include <asm/jz4750d.h>
+#endif
+
+
+/************************************************************************/
+/*                 show progress of boot 20091103 by zhzhao
+/*----------------------------------------------------------------------*/
+int progress_x=124,progress_y=205; // the start point to paint progress
+
+void  show_boot_progress (int status)
+{   
+	uint *fb32;
+
+	uchar *fb8;
+	ushort i,j;
+	int color32=0xff0000;
+	int color8=0xff;
+
+	if (BMP_LOGO_BITS == 24){
+		fb32   = (uint *)(lcd_base + progress_y * lcd_line_length + progress_x);
+		printf("length lcd is %d \n",lcd_line_length);
+		if (status > 0 )
+			//	for(j=progress_y;j<1+progress_y;++j){
+				for(i=0;i<12;i++)
+					fb32[i] = color32;
+		//	fb32 += panel_info.vl_col;
+		//	}
+				
+
+	}else{
+		fb8   = (uchar *)(lcd_base + progress_y * lcd_line_length + progress_x);
+	
+		if (status > 0 )
+			for(j=progress_y;j<5+progress_y;++j){
+				for(i=0;i<8;i++)
+					fb8[i] = color8;
+				fb32 += panel_info.vl_col;
+			}
+	}
+	progress_x += 12; 
+	printf("##### progress = %d \n",status);
+}
+
+
+
 /************************************************************************/
 
 /*----------------------------------------------------------------------*/
@@ -229,7 +275,7 @@ void lcd_puts (const char *s)
 	}
 
 	while (*s) {
-		lcd_putc (*s++);
+		lcd_putc (*s++);  
 	}
 }
 
@@ -370,7 +416,7 @@ int drv_lcd_init (void)
 	int rc;
 
 	lcd_base = (void *)(gd->fb_base);
-
+	printf("-=-=-=-= 0x%08x -=-=-=- \n",lcd_base);
 	lcd_line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
 
 	lcd_init (lcd_base);		/* LCD initialization */
@@ -579,10 +625,12 @@ void bitmap_plot (int x, int y)
 		BMP_LOGO_WIDTH, BMP_LOGO_HEIGHT, BMP_LOGO_COLORS,
 		sizeof(bmp_logo_palette)/(sizeof(ushort)));
 
-	bmap = &bmp_logo_bitmap[0];
+	bmap = &bmp_logo_bitmap[0]; /*give the first data address to point bmap*/
+
 	fb   = (uchar *)(lcd_base + y * lcd_line_length + x);
 
 	if (NBITS(panel_info.vl_bpix) < 12) {
+		
 		/* Leave room for default color map */
 #if defined(CONFIG_PXA250)
 		cmap = (ushort *)fbi->palette;
@@ -611,25 +659,37 @@ void bitmap_plot (int x, int y)
 			fb   += panel_info.vl_col;
 		}
 	}
-	else{   /* true color mode */
+	else{   /* true color mode */ //panel_info.vl_bpix is bit per pixel
 		if(NBITS(panel_info.vl_bpix) == 16){
 			fb16 = (ushort *)(lcd_base + y * lcd_line_length + x);
 			for (i=0; i<BMP_LOGO_HEIGHT; ++i) {
 				for (j=0; j<BMP_LOGO_WIDTH; j++) {
 					fb16[j] = bmp_logo_palette[(bmap[j])];
+					
 				}
 				bmap += BMP_LOGO_WIDTH;
 				fb16 += panel_info.vl_col;
 			}
 		}
-		else{
+		else{ 
 			fb32 = (uint *)(lcd_base + y * lcd_line_length + x);
+
 			for (i=0; i<BMP_LOGO_HEIGHT; ++i) {
+			
 				for (j=0; j<BMP_LOGO_WIDTH; j++) {
-					fb32[j] = bmp_logo_palette[(bmap[j])];
+					if ( BMP_LOGO_BITS == 24)
+                                  /*the bitmap is stored in  bmp_logo_bitmap[] from botom to top
+                                    , so we should read in  bmp_logo_bitmap[] form botom to top
+                                       20091103 by zhzhao*/	
+						fb32[j] = bmp_logo_bitmap[j+(BMP_LOGO_WIDTH*(BMP_LOGO_HEIGHT-1-i))];
+					else
+						fb32[j] = bmp_logo_palette[(bmap[j])];
+					
+
 				}
 				bmap += BMP_LOGO_WIDTH;
-				fb32 += panel_info.vl_col;	
+				fb32 += panel_info.vl_col;
+				// fb32 += 480;	
 			}
 		
 		}

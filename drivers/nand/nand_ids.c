@@ -107,6 +107,7 @@ struct nand_flash_dev nand_flash_ids[] = {
 
 	/* 32 Gigabit */
 	{"NAND 4GiB 3,3V 8-bit",	0xD7, 0, 4096, 0, NAND_SAMSUNG_LP_OPTIONS | NAND_NO_AUTOINCR},
+	{"NAND 4GiB 3,3V 8-bit",	0x68, 0, 4096, 0, NAND_SAMSUNG_LP_OPTIONS | NAND_NO_AUTOINCR},
 
 	/* Renesas AND 1 Gigabit. Those chips do not support extended id and have a strange page/block layout !
 	 * The chosen minimum erasesize is 4 * 2 * 2048 = 16384 Byte, as those chips have an array of 4 page planes

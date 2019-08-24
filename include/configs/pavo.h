@@ -79,7 +79,7 @@
 /* this must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <cmd_confdefs.h>
 
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
 #define CONFIG_BOOTARGS		"mem=64M console=ttyS0,57600n8 ip=off rootfstype=yaffs2 root=/dev/mtdblock2 rw"
 #define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
@@ -134,9 +134,16 @@
 
 /*-----------------------------------------------------------------------
  * NAND FLASH configuration
+ * CFG_NAND_PAGE_SIZE and CFG_NAND_BLOCK_SIZE can be auto detected in nand_spl/nand_boot_jz4740.c
  */
+#if 0 //2knand
 #define CFG_NAND_PAGE_SIZE      2048
 #define CFG_NAND_BLOCK_SIZE	(256 << 10)	/* NAND chip block size		*/
+#else //4knand
+#define CFG_NAND_PAGE_SIZE      4096
+#define CFG_NAND_BLOCK_SIZE	(512 << 10)	/* NAND chip block size		*/
+#endif
+
 #define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
 #define CFG_NAND_ECC_POS        28               /* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
 
@@ -167,12 +174,13 @@
  * Define the partitioning of the NAND chip (only RAM U-Boot is needed here)
  */
 #define CFG_NAND_U_BOOT_OFFS	(256 << 10)	/* Offset to RAM U-Boot image	*/
-#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
+//#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_SIZE	(512 << 11) /* Make sure to keep enough space avoid env_offset is saved into uboot offset*/
 
 #ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
+#define CFG_ENV_SIZE	        0x10000	
 #define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_SIZE / CFG_NAND_BLOCK_SIZE * CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
-#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
+//#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
 #endif
 
 
