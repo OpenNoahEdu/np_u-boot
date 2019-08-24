@@ -20,7 +20,9 @@
  */
 #include <config.h>
 
-#if defined(CONFIG_JZ4730) || defined(CONFIG_JZ5730) || defined(CONFIG_FPGA)
+#if defined(CONFIG_JZ4730) || defined(CONFIG_JZ5730) || defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ4750D)
+
+#if defined(CONFIG_JZ4730) || defined(CONFIG_JZ5730) || defined(CONFIG_FPGA) 
 
 #include <common.h>
 #include <malloc.h>
@@ -38,6 +40,9 @@
 #endif
 #if defined(CONFIG_JZ4750D)
 #include <asm/jz4750d.h>
+#endif
+#if defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
 #endif
 #if defined(CONFIG_JZ5730)
 #include <asm/jz5730.h>
@@ -374,3 +379,4 @@ int jz_enet_initialize(bd_t *bis)
 }
 
 #endif /* CONFIG_JZ4730 || CONFIG_JZ5730 */
+#endif 

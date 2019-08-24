@@ -133,7 +133,7 @@ static struct nand_oobinfo nand_oob_128 = {
 		70, 71,	72, 73,	74, 75, 76, 77},
 	.oobfree = { {2, 4}, {78, 50} }
 };
-#elif defined(CONFIG_JZ4750) ||  defined(CONFIG_JZ4750D)
+#elif defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ4760)
 #if (CFG_NAND_BCH_BIT == 8)
 static struct nand_oobinfo nand_oob_64 = {
 	.useecc = MTD_NANDECC_AUTOPLACE,

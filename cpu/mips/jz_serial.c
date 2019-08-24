@@ -26,7 +26,8 @@
 #include <config.h>
 
 #if defined(CONFIG_JZ4730) || defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) \
-	|| defined(CONFIG_JZ4750D) || defined(CONFIG_JZ5730)
+	|| defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ5730)\
+	|| defined(CONFIG_JZ4760)
 
 #include <common.h>
 
@@ -42,8 +43,14 @@
 #if defined(CONFIG_JZ4750D)
 #include <asm/jz4750d.h>
 #endif
+#if defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
+#endif
 #if defined(CONFIG_JZ5730)
 #include <asm/jz5730.h>
+#endif
+#if defined(CONFIG_JZ4760)
+#include <asm/jz4760.h>
 #endif
 
 #undef UART_BASE
@@ -71,10 +78,6 @@ int serial_init (void)
 	volatile u8 *uart_lcr = (volatile u8 *)(UART_BASE + OFF_LCR);
 	volatile u8 *uart_ier = (volatile u8 *)(UART_BASE + OFF_IER);
 	volatile u8 *uart_sircr = (volatile u8 *)(UART_BASE + OFF_SIRCR);
-
-#ifdef CONFIG_JZ4750D
-	__cpm_start_uart1();
-#endif
 
 	/* Disable port interrupts while changing hardware */
 	*uart_ier = 0;

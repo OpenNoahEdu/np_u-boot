@@ -29,6 +29,9 @@
 #if defined(CONFIG_JZ4750D)
 #include <asm/jz4750d.h>
 #endif
+#if defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
+#endif
 
 /*
  * NAND flash definitions
@@ -312,7 +315,11 @@ static void gpio_init(void)
 #if CONFIG_NR_DRAM_BANKS == 2   /* Use Two Banks: DCS0 and DCS1 */
 	__gpio_as_sdram_x2_32bit();
 #else
+#if (SDRAM_BW16 == 0)
 	__gpio_as_sdram_32bit();
+#else
+	__gpio_as_sdram_16bit();
+#endif
 #endif
 
 	/*
@@ -342,6 +349,7 @@ void nand_boot(void)
 	/*
 	 * Init hardware
 	 */
+	__cpm_start_all();
 	gpio_init();
 	serial_init();
 

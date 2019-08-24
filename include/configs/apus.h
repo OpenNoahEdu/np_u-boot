@@ -139,8 +139,8 @@
 #define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
 #define CFG_NAND_BCH_BIT        8               /* Specify the hardware BCH algorithm for 4750 (4|8) */
 #define CFG_NAND_ECC_POS        24              /* Ecc offset position in oob area, its default value is 3 if it isn't defined. */
-//#define CFG_NAND_BCH_WITH_OOB                   /* define this to conform NAND ECC with linux kernel */
-#define CFG_NAND_IS_SHARE	1
+//#define CFG_NAND_BCH_WITH_OOB                 /* define this to conform NAND ECC with linux kernel */
+#define CFG_NAND_IS_SHARE	1               /* Just for other boot mode(e.g. SD boot), it can be auto-detected by NAND boot */
 
 #define CFG_MAX_NAND_DEVICE     1
 #define NAND_MAX_CHIPS          1

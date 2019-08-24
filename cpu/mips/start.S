@@ -32,23 +32,32 @@
 #ifdef CONFIG_JZ4730
 #include <asm/jz4730.h>
 #endif
-
 #ifdef CONFIG_JZ4740
 #include <asm/jz4740.h>
 #endif
-
 #ifdef CONFIG_JZ4750
 #include <asm/jz4750.h>
 #endif
-
 #ifdef CONFIG_JZ4750D
 #include <asm/jz4750d.h>
 #endif
-	
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#ifdef CONFIG_JZ4750L
+#include <asm/jz4750l.h>
+#endif
+#ifdef CONFIG_JZ4760
+#include <asm/jz4760.h>
+#endif	
+
+#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 #define JZ4750_NANDBOOT_CFG0 (0x55555500 | (CFG_NAND_BW8*0xff))
 #define JZ4750_NANDBOOT_CFG1 0x55555555	
 #define JZ4750_NANDBOOT_CFG2 ((CFG_NAND_PAGE_SIZE==2048)&0xff0000) | ((CFG_NAND_PAGE_SIZE!=512)&0xff00) | ((CFG_NAND_ROW_CYCLE==3)&0xff)
+#endif
+
+#if defined(CONFIG_JZ4760)
+#define JZ4760_NANDBOOT_CFG0 (0x55555500 | (CFG_NAND_BW8*0xff))
+#define JZ4760_NANDBOOT_CFG1 0x55555555	
+#define JZ4760_NANDBOOT_CFG2 ((CFG_NAND_PAGE_SIZE==2048)&0xff0000) | ((CFG_NAND_PAGE_SIZE!=512)&0xff00) | ((CFG_NAND_ROW_CYCLE==3)&0xff)
 #endif
 
 #define RVECENT(f,n) \
@@ -71,7 +80,7 @@ _start:
 #endif
 #endif
 #endif /* CONFIG_JZ4740 */
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 #if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_NAND_U_BOOT)
 	.word JZ4750_NORBOOT_CFG	/* fetched during NOR Boot */
 #else
@@ -83,6 +92,19 @@ _start:
 #endif
 #endif
 #endif /* CONFIG_JZ4750 || CONFIG_JZ4750D */
+#if defined(CONFIG_JZ4760)
+#if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_NAND_U_BOOT)
+	.word JZ4760_NORBOOT_CFG	/* fetched during NOR Boot */
+#else
+#if defined(CONFIG_NAND_SPL) && !defined(CONFIG_MSC_SPL)
+	/* First three words fetched by CPU during NAND Boot */
+	.word JZ4760_NANDBOOT_CFG0
+	.word JZ4760_NANDBOOT_CFG1
+	.word JZ4760_NANDBOOT_CFG2
+#endif
+#endif
+#endif /* CONFIG_JZ4760 */
+	
 #if !defined(CONFIG_JzRISC)
 	RVECENT(reset,0)	/* U-boot entry point */
 	RVECENT(reset,1)	/* software reboot */
@@ -425,6 +447,18 @@ reset:
 	j	t9
 	nop
 #else
+#ifdef CONFIG_JZ4760
+#ifdef	CONFIG_DDRC
+	/* config as ddr */
+	la	t0, DDRC_BASE
+	li	t1, 0x00000001
+	sw	t1, 0x8(t0)
+	li	t1, 0x00000040
+	sw	t1, 0x4(t0)
+	li	t1, 0x000020f8
+	sw	t1, 0x24(t0)
+#endif /* CONFIG_DDRC */
+#endif /* Jz4760 */
 	li	t0, CFG_SDRAM_BASE + CFG_INIT_SP_OFFSET
 	la	sp, 0(t0)
 
@@ -452,6 +486,10 @@ relocate_code:
 	la	t3, in_ram
 	lw	t2, -12(t3)	/* t2 <-- uboot_end_data	*/
 	move	t1, a2
+	subu	t2, t2, t0	/* total count in bytes */
+	srl	t2, t2, 2	/* total count in word */
+	li	t4, 0xa0000000
+	or	t0, t0, t4	/* uncached address */
 
 	/*
 	 * Fix GOT pointer:
@@ -459,14 +497,14 @@ relocate_code:
 	 * New GOT-PTR = (old GOT-PTR - TEXT_BASE) + Destination Address
 	 */
 	move	t6, gp
-	sub	gp, TEXT_BASE
+	subu	gp, TEXT_BASE
 	add	gp, a2			/* gp now adjusted		*/
-	sub	t6, gp, t6		/* t6 <-- relocation offset	*/
+	subu	t6, gp, t6		/* t6 <-- relocation offset	*/
 
 	/*
-	 * t0 = source address
-	 * t1 = target address
-	 * t2 = source end address
+	 * t0 = source address (in flash)
+	 * t1 = target address (in memory)
+	 * t2 = total count in word
 	 */
 	/* On the purple board we copy the code earlier in a special way
 	 * in order to solve flash problems
@@ -474,10 +512,11 @@ relocate_code:
 #ifndef CONFIG_PURPLE
 1:
 	lw	t3, 0(t0)
+	addiu	t0, 4
+	addiu	t2, t2, -1
 	sw	t3, 0(t1)
-	addu	t0, 4
-	ble	t0, t2, 1b
-	addu	t1, 4			/* delay slot			*/
+	bgtz	t2, 1b
+	addiu	t1, 4			/* delay slot			*/
 #endif
 
 	/* If caches were enabled, we would have to flush them here.
@@ -526,17 +565,17 @@ in_ram:
 	/* Now we want to update GOT.
 	 */
 	lw	t3, -4(t0)	/* t3 <-- num_got_entries	*/
-	addi	t4, gp, 8	/* Skipping first two entries.	*/
+	addiu	t4, gp, 8	/* Skipping first two entries.	*/
 	li	t2, 2
 1:
 	lw	t1, 0(t4)
 	beqz	t1, 2f
-	add	t1, t6
+	addu	t1, t6
 	sw	t1, 0(t4)
 2:
-	addi	t2, 1
+	addiu	t2, 1
 	blt	t2, t3, 1b
-	addi	t4, 4		/* delay slot			*/
+	addiu	t4, 4		/* delay slot			*/
 
 	/* Clear BSS.
 	 */

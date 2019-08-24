@@ -25,12 +25,14 @@
 #include <common.h>
 #include <part.h>
 
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 
 #if defined(CONFIG_JZ4750)
 #include <asm-mips/jz4750.h>
 #elif defined(CONFIG_JZ4750D)
 #include <asm-mips/jz4750.h>
+#elif defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
 #endif
 #include "jz_mmc.h"
 

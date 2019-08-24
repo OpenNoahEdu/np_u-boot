@@ -44,6 +44,10 @@
 #include <asm/jz4750.h>
 #endif
 
+#ifdef CONFIG_JZ4760
+#include <asm/jz4760.h>
+#endif
+
 #if !defined (CONFIG_NAND_SPL) && !defined (CONFIG_MSC_SPL) 
 
 int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -53,7 +57,7 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	__wdt_start();
 	while(1);
 #endif
-#if defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750)
+#if defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) || defined(CONFIG_JZ4760)
 	__wdt_select_extalclk();
 	__wdt_select_clk_div64();
 	__wdt_set_data(100);

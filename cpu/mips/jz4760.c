@@ -1,5 +1,5 @@
 /*
- * Jz4750 common routines
+ * Jz4760 common routines
  *
  *  Copyright (c) 2006
  *  Ingenic Semiconductor, <jlwei@ingenic.cn>
@@ -21,17 +21,15 @@
  */
 
 #include <config.h>
+#include <asm/mipsregs.h>
 
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
-
+#if defined(CONFIG_JZ4760)
 #include <common.h>
 #include <command.h>
-#ifdef CONFIG_JZ4750
-#include <asm/jz4750.h>
-#else
-#include <asm/jz4750d.h>
-#endif
+#include <asm/jz4760.h>
 
+//#define DEBUG
+#undef DEBUG
 extern void board_early_init(void);
 
 /* PLL output clock = EXTAL * NF / (NR * NO)
@@ -49,8 +47,7 @@ void pll_init(void)
 	};
 
         /** divisors, 
-	 *  for jz4750,  I:H:P:M:L;
-	 *  for jz4750d ,I:H0:P:M:H1.
+	 *  for jz4760 ,I:H0:P:M:H1.
          */
 	int div[5] = {1, 3, 3, 3, 3}; 
 	int nf, pllout2;
@@ -60,11 +57,7 @@ void pll_init(void)
 		(n2FR[div[1]] << CPM_CPCCR_HDIV_BIT) | 
 		(n2FR[div[2]] << CPM_CPCCR_PDIV_BIT) |
 		(n2FR[div[3]] << CPM_CPCCR_MDIV_BIT) |
-#ifdef CONFIG_JZ4750
-		(n2FR[div[4]] << CPM_CPCCR_LDIV_BIT);
-#else
 		(n2FR[div[4]] << CPM_CPCCR_H1DIV_BIT);
-#endif
 
 	if (CFG_EXTAL > 16000000)
 		cfcr |= CPM_CPCCR_ECS;
@@ -73,10 +66,6 @@ void pll_init(void)
 
 	pllout2 = (cfcr & CPM_CPCCR_PCS) ? CFG_CPU_SPEED : (CFG_CPU_SPEED / 2);
 
-#ifdef CONFIG_JZ4750
-	/* Init USB Host clock, pllout2 must be n*48MHz */
-	REG_CPM_UHCCDR = pllout2 / 48000000 - 1;
-#endif
 	nf = CFG_CPU_SPEED * 2 / CFG_EXTAL;
 	plcr1 = ((nf - 2) << CPM_CPPCR_PLLM_BIT) | /* FD */
 		(0 << CPM_CPPCR_PLLN_BIT) |	/* RD=0, NR=2 */
@@ -104,11 +93,7 @@ void pll_add_test(int new_freq)
 		(n2FR[div[1]] << CPM_CPCCR_HDIV_BIT) | 
 		(n2FR[div[2]] << CPM_CPCCR_PDIV_BIT) |
 		(n2FR[div[3]] << CPM_CPCCR_MDIV_BIT) |
-#ifdef CONFIG_JZ4750
-		(n2FR[div[4]] << CPM_CPCCR_LDIV_BIT);
-#else
 		(n2FR[div[4]] << CPM_CPCCR_H1DIV_BIT);
-#endif
 
 	if (CFG_EXTAL > 16000000)
 		cfcr |= CPM_CPCCR_ECS;
@@ -117,10 +102,6 @@ void pll_add_test(int new_freq)
 
 	pllout2 = (cfcr & CPM_CPCCR_PCS) ? new_freq : (new_freq / 2);
 
-#ifdef CONFIG_JZ4750
-	/* Init UHC clock */
-	REG_CPM_UHCCDR = pllout2 / 48000000 - 1;
-#endif
 	//nf = new_freq * 2 / CFG_EXTAL;
 	nf = new_freq / 1000000; //step length is 1M
 	plcr1 = ((nf - 2) << CPM_CPPCR_PLLM_BIT) | /* FD */
@@ -141,7 +122,6 @@ void calc_clocks_add_test(void)
 #ifndef CONFIG_FPGA
 	unsigned int pllout;
 	unsigned int div[10] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
-
 	pllout = __cpm_get_pllout();
 
 	gd->cpu_clk = pllout / div[__cpm_get_cdiv()];
@@ -155,6 +135,7 @@ void calc_clocks_add_test(void)
 #endif
 }
 
+#ifndef CONFIG_DDRC
 void sdram_add_test(int new_freq)
 {
 	register unsigned int dmcr, sdmode, tmp, cpu_clk, mem_clk, ns;
@@ -266,6 +247,8 @@ void sdram_init(void)
 
 	int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
 
+	REG_DDRC_CFG = 0x80000000;
+	
 	cpu_clk = CFG_CPU_SPEED;
 #if defined(CONFIG_FPGA)
 	mem_clk = CFG_EXTAL / CFG_DIV;
@@ -379,8 +362,351 @@ void sdram_init(void)
 	/* everything is ok now */
 }
 
-#ifndef CONFIG_NAND_SPL
+#else
 
+#ifdef DEBUG
+static void ddrc_regs_print(void)
+{
+	printf("REG_DDRC_ST \t\t= 0x%08x\n", REG_DDRC_ST);
+	printf("REG_DDRC_CFG \t\t= 0x%08x\n", REG_DDRC_CFG);
+	printf("REG_DDRC_CTRL \t\t= 0x%08x\n", REG_DDRC_CTRL);
+	printf("REG_DDRC_LMR \t\t= 0x%08x\n", REG_DDRC_LMR);
+	printf("REG_DDRC_TIMING1 \t= 0x%08x\n", REG_DDRC_TIMING1);
+	printf("REG_DDRC_TIMING2 \t= 0x%08x\n", REG_DDRC_TIMING2);
+	printf("REG_DDRC_REFCNT \t\t= 0x%08x\n", REG_DDRC_REFCNT);
+	printf("REG_DDRC_DQS \t\t= 0x%08x\n", REG_DDRC_DQS);
+	printf("REG_DDRC_DQS_ADJ \t= 0x%08x\n", REG_DDRC_DQS_ADJ);
+	printf("REG_DDRC_MMAP0 \t\t= 0x%08x\n", REG_DDRC_MMAP0);
+	printf("REG_DDRC_MMAP1 \t\t= 0x%08x\n", REG_DDRC_MMAP1);
+}
+
+#define DDR_16M (16 * 1024 * 1024)
+static void map_ddr_memory(unsigned long vbase, unsigned long pbase, unsigned long meg) {
+	int i, entrys, pfn0, pfn1, vadd, padd;
+	unsigned long entrylo0, entrylo1, entryhi, pagemask;
+
+	entrys = meg / 16;
+	pagemask = PM_16M;
+	
+	for (i = 0; i < entrys; i+=2) {
+		vadd = vbase + i * DDR_16M;
+		padd = pbase + i * DDR_16M;
+		entryhi = vadd;
+		pfn0 = (padd >> 6) | (2 << 3);
+		pfn1 = (padd + DDR_16M) >> 6 | (2 << 3);
+		entrylo0 = (pfn0 | 0x6) & 0x3ffffff;
+		entrylo1 = (pfn1 | 0x6) & 0x3ffffff;
+		add_wired_entry(entrylo0, entrylo1, entryhi, pagemask);
+	}
+}
+#define DDR_MEM_BASE  0xa0000000		/*un-cached*/
+//#define DDR_BANK_SIZE	0x01000000		/*word 4M, char 16M*/
+#define DDR_BANK_SIZE	0x0800000		/*word 4M, char 16M*/
+//#define DDR_BANK_SIZE	0x02000000		/*word 8M, char 32M*/
+#define DDR_BANK_NUM	4
+
+static void ddr_mem_test(void)
+{
+	volatile unsigned int *ptr;
+	/*write data to bank0~3*/
+	printf("Write data to SDRAM\n");
+	for (ptr = (volatile unsigned int *)(DDR_MEM_BASE); (unsigned int)ptr < DDR_MEM_BASE + DDR_BANK_SIZE * DDR_BANK_NUM; ptr++) {
+		*ptr = (unsigned int)ptr;
+//		*ptr = 0xffffffff;
+		if (*ptr != (unsigned int)ptr) {
+//		if (*ptr != 0xffffffff) {
+			printf("\nERROR: ");
+			printf("--0x%08x\t", (unsigned int)ptr);
+			printf("--0x%08x\n", *ptr);
+		}
+	}
+	printf("0x%08x\n", (unsigned int)ptr);
+	for (ptr = (volatile unsigned int *)(DDR_MEM_BASE); (unsigned int)ptr < DDR_MEM_BASE + DDR_BANK_SIZE * DDR_BANK_NUM; ptr++) {
+		if (*ptr != (unsigned int)ptr) {
+			printf("\nMobile SDRAM ERROR\n");
+			printf("0x%08x\t", (unsigned int)ptr);
+			printf("0x%08x\n", *ptr);
+		}
+	}
+	printf("0x%08x\n", (unsigned int)ptr);
+	printf("Read and compare finish\n");
+	/*mobile test finish*/
+}
+#endif /* DEBUG */
+
+/* DDR sdram init */
+void sdram_init(void)
+{
+	volatile unsigned int tmp_cnt;
+	register unsigned int tmp, cpu_clk, mem_clk, ns, ns_int, ddr_twr,  div;
+	register unsigned int ddrc_cfg_reg=0, ddrc_timing1_reg=0, ddrc_timing2_reg=0, init_ddrc_refcnt=0, init_ddrc_dqs=0, init_ddrc_ctrl=0;
+	cpu_clk = CFG_CPU_SPEED;
+
+#if defined(CONFIG_FPGA)
+	mem_clk = CFG_EXTAL / CFG_DIV;
+#else
+	mem_clk = cpu_clk * div[__cpm_get_cdiv()] / div[__cpm_get_mdiv()];
+#endif
+
+#if defined(CONFIG_SDRAM_DDR2) // ddr2
+	ddrc_cfg_reg = DDR_Msel<<16 | DDR_HL<<15 | (DDR_ROW-12)<<10 | (DDR_COL-8)<<8 | DDR_CS1EN<<7 | DDR_CS0EN<<6 | DDR_Tsel<<18 | ((DDR_CL-1) | 0x8)<<2 | DDR_BANK8<<1 | DDR_DW32;
+	ddrc_cfg_reg |= DDRC_CFG_TYPE_DDR2;
+#else // mobile ddr
+//	ddrc_cfg_reg = 0 << 30 | DDRC_CFG_BTRUN | DDR_Msel<<16 | DDR_HL<<15 | DDRC_CFG_TYPE_MDDR | (DDR_ROW-12)<<10 | (DDR_COL-8)<<8 | DDR_CS1EN<<7 | DDR_CS0EN<<6 | DDR_Tsel<<18 | ((DDR_CL-1) | 0x8)<<2 | DDR_BANK8<<1 | DDR_DW32;
+	ddrc_cfg_reg = 1 << 30 | DDRC_CFG_BTRUN | DDR_Msel<<16 | DDR_HL<<15 | DDRC_CFG_TYPE_MDDR | (DDR_ROW-12)<<10 | (DDR_COL-8)<<8 | DDR_CS1EN<<7 | DDR_CS0EN<<6 | DDR_Tsel<<18 | ((DDR_CL-1) | 0x8)<<2 | DDR_BANK8<<1 | DDR_DW32;
+#endif
+
+	ns = 1000000000 / mem_clk; /* ns per tck ns <= real value */
+	/* ACTIVE to PRECHARGE command period */
+	tmp = (DDR_tRAS%ns == 0) ? (DDR_tRAS/ns) : (DDR_tRAS/ns+1);
+//	if (tmp < 1) tmp = 1;
+	if (tmp < 3) tmp = 3;
+	if (tmp > 31) tmp = 31;
+	ddrc_timing1_reg = ((tmp/2) << DDRC_TIMING1_TRAS_BIT);
+
+	/* READ to PRECHARGE command period. */
+	tmp = (DDR_tRTP%ns == 0) ? (DDR_tRTP/ns) : (DDR_tRTP/ns+1);
+	if (tmp < 1) tmp = 1;
+	if (tmp > 4) tmp = 4;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TRTP_BIT);
+	
+	/* PRECHARGE command period. */
+	tmp = (DDR_tRP%ns == 0) ? DDR_tRP/ns : (DDR_tRP/ns+1);
+	if (tmp < 1) tmp = 1;
+	if (tmp > 8) tmp = 8;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TRP_BIT);
+
+	/* ACTIVE to READ or WRITE command period. */
+	tmp = (DDR_tRCD%ns == 0) ? DDR_tRCD/ns : (DDR_tRCD/ns+1);
+	if (tmp < 1) tmp = 1;
+	if (tmp > 8) tmp = 8;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TRCD_BIT);
+
+	/* ACTIVE to ACTIVE command period. */
+	tmp = (DDR_tRC%ns == 0) ? DDR_tRC/ns : (DDR_tRC/ns+1);
+	if (tmp < 3) tmp = 3;
+	if (tmp > 31) tmp = 31;
+	ddrc_timing1_reg |= ((tmp/2) << DDRC_TIMING1_TRC_BIT);
+
+	/* ACTIVE bank A to ACTIVE bank B command period. */
+	tmp = (DDR_tRRD%ns == 0) ? DDR_tRRD/ns : (DDR_tRRD/ns+1);
+	if (tmp < 2) tmp = 2;
+	if (tmp > 4) tmp = 4;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TRRD_BIT);
+
+
+	/* WRITE Recovery Time defined by register MR of DDR2 memory */
+	tmp = (DDR_tWR%ns == 0) ? DDR_tWR/ns : (DDR_tWR/ns+1);
+	tmp = (tmp < 1) ? 1 : tmp;
+	tmp = (tmp < 2) ? 2 : tmp;
+	tmp = (tmp > 6) ? 6 : tmp;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TWR_BIT);
+	ddr_twr = tmp; 
+
+	/* WRITE to READ command delay. */ 
+	tmp = (DDR_tWTR%ns == 0) ? DDR_tWTR/ns : (DDR_tWTR/ns+1);
+	if (tmp > 4) tmp = 4;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TWTR_BIT);
+
+
+	/* WRITE to READ command delay. */ 
+	tmp = DDR_tWTR/ns;
+	if (tmp < 1) tmp = 1;
+	if (tmp > 4) tmp = 4;
+	ddrc_timing1_reg |= ((tmp-1) << DDRC_TIMING1_TWTR_BIT);
+
+
+	/* AUTO-REFRESH command period. */
+	tmp = (DDR_tRFC%ns == 0) ? DDR_tRFC/ns : (DDR_tRFC/ns+1);
+	if (tmp > 31) tmp = 31;
+	ddrc_timing2_reg = ((tmp/2) << DDRC_TIMING2_TRFC_BIT);
+
+	/* Minimum Self-Refresh / Deep-Power-Down time */
+	tmp = DDR_tMINSR/ns;
+	if (tmp < 9) tmp = 9;
+	if (tmp > 129) tmp = 129;
+	ddrc_timing2_reg |= (((tmp-1)/8-1) << DDRC_TIMING2_TMINSR_BIT);
+	ddrc_timing2_reg |= (DDR_tXP-1)<<4 | (DDR_tMRD-1);
+
+	div = DDR_CLK_DIV/16 - 1;
+	init_ddrc_refcnt = 2 << 1 | DDRC_REFCNT_REF_EN;
+
+	ns_int = (1000000000%mem_clk == 0) ?
+		(1000000000/mem_clk) : (1000000000/mem_clk+1);
+	tmp = DDR_tREFI/ns_int;
+	tmp = tmp/DDR_CLK_DIV;
+	if (tmp > 0xfff)
+		tmp = 0xfff;
+
+	init_ddrc_refcnt |= tmp << DDRC_REFCNT_CON_BIT;
+	init_ddrc_dqs = DDRC_DQS_AUTO | DDRC_DQS_DET;
+
+	/* precharge power down, disable power down */
+	/* precharge power down, if set active power down, |= DDRC_CTRL_ACTPD */
+	init_ddrc_ctrl = DDRC_CTRL_PDT_DIS | DDRC_CTRL_PRET_8 | DDRC_CTRL_UNALIGN | DDRC_CTRL_CKE;
+	if (mem_clk > 60000000)
+		init_ddrc_ctrl |= DDRC_CTRL_RDC;
+
+	/* reset ddrc_controller */
+	REG_DDRC_CTRL = DDRC_CTRL_RESET;
+
+	/* Wait for precharge, > 200us */
+	tmp_cnt = (cpu_clk / 1000000) * 200;
+	while (tmp_cnt--);
+
+	REG_DDRC_CTRL = 0x0;
+	REG_DDRC_CFG     = ddrc_cfg_reg;
+	REG_DDRC_TIMING1 = ddrc_timing1_reg;
+	REG_DDRC_TIMING2 = ddrc_timing2_reg;
+
+	REG_DDRC_MMAP0 = DDRC_MMAP0_BASE | DDRC_MMAP_MASK_128_128;
+
+#if DDR_CS1EN == 1
+	REG_DDRC_MMAP0 = DDRC_MMAP0_BASE | DDRC_MMAP_MASK_64_64;
+	REG_DDRC_MMAP1 = DDRC_MMAP1_BASE_64M | DDRC_MMAP_MASK_64_64;
+//	REG_DDRC_MMAP1 = DDRC_MMAP1_BASE_128M | DDRC_MMAP_MASK_128_128;
+#endif
+	/***** init ddrc registers & ddr memory regs ****/
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 10;
+	while (tmp_cnt--);
+
+#if defined(CONFIG_SDRAM_DDR2) // ddr1 and mddr
+	/* Set CKE High */
+	REG_DDRC_CTRL = DDRC_CTRL_CKE; // ?
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 10;
+	while (tmp_cnt--);
+
+	/* init ddr memory regs */
+	/* PREA */
+	REG_DDRC_LMR =  DDRC_LMR_CMD_PREC | DDRC_LMR_START; //0x1;
+
+	/* EMR2: extend mode register2 */
+	REG_DDRC_LMR = DDRC_LMR_BA_EMRS2 | DDRC_LMR_CMD_LMR | DDRC_LMR_START;//0x221;
+
+	/* EMR3: extend mode register3 */
+	REG_DDRC_LMR = DDRC_LMR_BA_EMRS3 | DDRC_LMR_CMD_LMR | DDRC_LMR_START;//0x321;
+
+	/* EMR1: extend mode register1 */
+	REG_DDRC_LMR = (DDR_EMRS1_DQS_DIS << 16) | DDRC_LMR_BA_EMRS1 | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* MR - DLL Reset A1A0 burst 2 */
+	REG_DDRC_LMR = ((ddr_twr-1)<<9 | DDR_MRS_DLL_RST | DDR_CL<<4 | DDR_MRS_BL_4)<< 16
+		| DDRC_LMR_BA_MRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* PREA */
+	REG_DDRC_LMR =  DDRC_LMR_CMD_PREC | DDRC_LMR_START; //0x1;
+
+	/* AR: auto refresh */
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+
+	/* MR - DLL Reset End */
+	REG_DDRC_LMR = ((ddr_twr-1)<<9 | DDR_CL<<4 | DDR_MRS_BL_4)<< 16
+		| DDRC_LMR_BA_MRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* EMR1 - OCD Default */
+	REG_DDRC_LMR = (DDR_EMRS1_DQS_DIS | DDR_EMRS1_OCD_DFLT) << 16
+		| DDRC_LMR_BA_EMRS1 | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* EMR1 - OCD Exit */
+	REG_DDRC_LMR = (DDR_EMRS1_DQS_DIS << 16) | DDRC_LMR_BA_EMRS1 | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 10;
+	while (tmp_cnt--);
+
+	/* Enable Auto-Refresh */
+	REG_DDRC_REFCNT = init_ddrc_refcnt;
+
+	/* Enable DLL Detect */
+	REG_DDRC_DQS    = init_ddrc_dqs;
+	REG_DDRC_CTRL   = init_ddrc_ctrl;
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 10;
+	while (tmp_cnt--);
+
+	/* Auto Refresh */
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 10;
+	while (tmp_cnt--);
+#elif defined(CONFIG_SDRAM_MDDR) // ddr1 and mddr
+	REG_DDRC_CTRL = DDRC_CTRL_CKE; // ?
+
+	/* Wait for number of auto-refresh cycles */
+	tmp_cnt = (cpu_clk / 1000000) * 300;
+	while (tmp_cnt--);
+
+	/* init ddr memory regs */
+	/* PREA */
+	REG_DDRC_LMR =  DDRC_LMR_CMD_PREC | DDRC_LMR_START; //0x1;
+
+	/* Wait for DDR_tRP */
+	tmp_cnt = (cpu_clk / 1000000) * 20;
+	while (tmp_cnt--);
+
+	/* AR: auto refresh */
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+
+	/* wait DDR_tRFC */
+	tmp_cnt = (cpu_clk / 1000000) * 20;
+	while (tmp_cnt--);
+
+	/* AR: auto refresh */
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+	/* wait DDR_tRFC */
+	tmp_cnt = (cpu_clk / 1000000) * 20;
+	while (tmp_cnt--);
+
+	/* MR */
+	REG_DDRC_LMR = (DDR_CL<<4 | DDR_MRS_BL_4)<< 16
+		| DDRC_LMR_BA_M_MRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* wait DDR_tMRD */
+	tmp_cnt = (cpu_clk / 1000000) * 20;
+	while (tmp_cnt--);
+
+	/* EMR: extend mode register */
+//	REG_DDRC_LMR = (DDR_EMRS_DS_HALF | DDR_EMRS_PRSR_ALL) << 16
+	REG_DDRC_LMR = (DDR_EMRS_DS_FULL | DDR_EMRS_PRSR_ALL) << 16
+		| DDRC_LMR_BA_M_EMRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* wait DDR_tMRD */
+	tmp_cnt = (cpu_clk / 1000000) * 20;
+	while (tmp_cnt--);
+
+	REG_DDRC_REFCNT = init_ddrc_refcnt;
+
+	/* Enable DLL Detect */
+	REG_DDRC_DQS    = init_ddrc_dqs;
+
+	/* Set CKE High */
+	REG_DDRC_CTRL = init_ddrc_ctrl;
+#if 0
+	{
+		int status;
+		REG_DDRC_LMR =  DDRC_LMR_BA_M_SR | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+		status = *(volatile unsigned int *)(DDR_MEM_BASE);
+		printf("MDDR Status Register = 0x%08x\n", status);
+	}
+#endif
+#endif
+#ifdef DEBUG
+	ddrc_regs_print();
+//	map_ddrc_memory(DDRC_MEM_BASE, 0xe0000000, 128);
+	ddr_mem_test();
+#endif
+
+}
+#endif
+
+#ifndef CONFIG_NAND_SPL
 static void calc_clocks(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
@@ -402,7 +728,7 @@ static void calc_clocks(void)
 		= CFG_EXTAL / CFG_DIV;
 #endif
 }
-
+#ifndef CONFIG_FPGA
 static void rtc_init(void)
 {
 
@@ -422,10 +748,10 @@ static void rtc_init(void)
 	REG_RTC_HRCR  = 0x00000fe0; /* reset delay 125ms */
 
 }
-
+#endif
 
 //----------------------------------------------------------------------
-// jz4750 board init routine
+// jz4760 board init routine
 
 int jz_board_init(void)
 {
@@ -436,6 +762,7 @@ int jz_board_init(void)
 #endif
 	serial_init();
 	sdram_init();        /* init sdram memory */
+
 #endif
 #if defined CONFIG_MSC_U_BOOT
 	pll_init();          /* init PLL */
@@ -449,7 +776,7 @@ int jz_board_init(void)
 
 //----------------------------------------------------------------------
 // U-Boot common routines
-
+#ifndef CONFIG_DDRC
 long int initdram(int board_type)
 {
 	u32 dmcr;
@@ -467,7 +794,26 @@ long int initdram(int board_type)
 
 	return size;
 }
+#else
+long int initdram(int board_type)
+{
+	u32 ddr_cfg;
+	u32 rows, cols, dw, banks;
+	ulong size;
 
+	ddr_cfg = REG_DDRC_CFG;
+	rows = 12 + ((ddr_cfg & DDRC_CFG_ROW_MASK) >> DDRC_CFG_ROW_BIT);
+	cols = 8 + ((ddr_cfg & DDRC_CFG_COL_MASK) >> DDRC_CFG_COL_BIT);
+
+	dw = (ddr_cfg & DDRC_CFG_DW) ? 4 : 2;
+	banks = (ddr_cfg & DDRC_CFG_BA) ? 8 : 4;
+
+	size = (1 << (rows + cols)) * dw * banks;
+	size *= (DDR_CS1EN + DDR_CS0EN);
+
+	return size;
+}
+#endif
 //----------------------------------------------------------------------
 // Timer routines
 
@@ -624,4 +970,4 @@ ulong get_tbclk (void)
 // End of timer routine.
 //---------------------------------------------------------------------
 
-#endif /* CONFIG_JZ4750 */
+#endif /* CONFIG_JZ4760 */

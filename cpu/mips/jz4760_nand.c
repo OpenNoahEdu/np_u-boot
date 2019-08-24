@@ -1,5 +1,5 @@
 /*
- * Platform independend driver for JZ4750.
+ * Platform independend driver for JZ4760.
  *
  * Copyright (c) 2007 Ingenic Semiconductor Inc.
  * Author: <jlwei@ingenic.cn>
@@ -12,15 +12,10 @@
 
 #include <common.h>
 
-#if (CONFIG_COMMANDS & CFG_CMD_NAND) &&	(defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L))
-
+#if (CONFIG_COMMANDS & CFG_CMD_NAND) &&	defined(CONFIG_JZ4760)
 #include <nand.h>
-#if defined(CONFIG_JZ4750)
-#include <asm/jz4750.h>
-#elif defined(CONFIG_JZ4750D)
-#include <asm/jz4750d.h>
-#elif defined(CONFIG_JZ4750L)
-#include <asm/jz4750l.h>
+#if defined(CONFIG_JZ4760)
+#include <asm/jz4760.h>
 #endif
 
 /* Size of ecc parities per 512 bytes, 7 or 13 bytes */
@@ -48,11 +43,11 @@ static void jz_hwcontrol(struct mtd_info *mtd, int cmd)
 	struct nand_chip *this = (struct nand_chip *)(mtd->priv);
 	switch (cmd) {
 		case NAND_CTL_SETNCE:
-			REG_EMC_NFCSR |= EMC_NFCSR_NFCE1;
+			REG_NEMC_NFCSR |= NEMC_NFCSR_NFCE1;
 			break;
 
 		case NAND_CTL_CLRNCE:
-			REG_EMC_NFCSR &= ~EMC_NFCSR_NFCE1;
+			REG_NEMC_NFCSR &= ~NEMC_NFCSR_NFCE1;
 			break;
 
 		case NAND_CTL_SETCLE:
@@ -99,8 +94,8 @@ static int jz_device_ready(struct mtd_info *mtd)
 static void jz_device_setup(void)
 {
 	/* Set NFE bit */
-	REG_EMC_NFCSR |= EMC_NFCSR_NFE1;
-	REG_EMC_SMCR1 = 0x0d444400;
+	REG_NEMC_NFCSR |= NEMC_NFCSR_NFE1;
+	REG_NEMC_SMCR1 = 0x0d444400;
 }
 
 void board_nand_select_device(struct nand_chip *nand, int chip)
@@ -274,7 +269,7 @@ static int jzsoc_nand_bch_correct_data(struct mtd_info *mtd, u_char * dat, u_cha
  */
 void board_nand_init(struct nand_chip *nand)
 {
-	if ((REG_EMC_BCR & EMC_BCR_BSR_MASK) == EMC_BCR_BSR_SHARE)
+	if ((REG_NEMC_BCR & NEMC_BCR_BSR_MASK) == NEMC_BCR_BSR_SHARE)
 		share_mode = 1;
 	else
 		share_mode = 0;

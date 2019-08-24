@@ -63,10 +63,10 @@
 /* this must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <cmd_confdefs.h>
 
-#define CONFIG_BOOTDELAY	3
+#define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
-#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,57600n8 ip=off root=/dev/ram0 rw"
-#define CONFIG_BOOTCOMMAND	"bootm 0xa8100000"
+#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,57600n8 ip=off rootfstype=yaffs2 root=/dev/mtdblock2 rw"
+#define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
 //#define CONFIG_NET_MULTI
@@ -117,6 +117,11 @@
 /*-----------------------------------------------------------------------
  * NAND FLASH configuration
  */
+#define CFG_NAND_PAGE_SIZE      2048
+#define CFG_NAND_BLOCK_SIZE	(256 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
+#define CFG_NAND_ECC_POS        28               /* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
+
 #define CFG_MAX_NAND_DEVICE     1
 #define NAND_MAX_CHIPS          1
 #define CFG_NAND_BASE           0xB8000000

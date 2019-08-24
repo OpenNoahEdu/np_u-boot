@@ -47,7 +47,7 @@
 
 #include <asm/io.h>               /* virt_to_phys() */
 
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 #if defined(CONFIG_LCD) && !defined(CONFIG_SLCD)
 //#if defined(CONFIG_4750_LCD)// && !defined(CONFIG_4750_SLCD)
 #if defined(CONFIG_JZ4750)
@@ -55,6 +55,9 @@
 #endif
 #if defined(CONFIG_JZ4750D)
 #include <asm/jz4750d.h>
+#endif
+#if defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
 #endif
 #include "jz4750_lcd.h"
 
@@ -280,7 +283,9 @@ void lcd_ctrl_init (void *lcdbase);
 
 void lcd_enable (void);
 void lcd_disable (void);
-
+#if defined(CONFIG_JZ4750D)
+static int lcd_open(void);
+#endif
 
 /************************************************************************/
 
@@ -308,8 +313,11 @@ void lcd_ctrl_init (void *lcdbase)
 	jz_lcd_desc_init(&panel_info);
 	jz_lcd_hw_init(&panel_info);
 
-	__lcd_display_on() ;
 	lcd_enable();
+#if defined(CONFIG_JZ4750D)
+	lcd_open();
+#endif
+	__lcd_display_on() ;
 }
 
 /*----------------------------------------------------------------------*/
@@ -426,6 +434,43 @@ static void jz_lcd_desc_init(vidinfo_t *vid)
 //	print_lcdc_desc(fbi);
 }
 
+#if defined(CONFIG_JZ4750D)
+static int lcd_open(void)
+{
+ 	unsigned int enable = 1, i;
+
+	if(!(REG_LCD_CTRL & LCD_CTRL_ENA))
+		REG_LCD_CTRL |= LCD_CTRL_ENA;
+
+	for (i = 0; i < 10; i++) {
+		if (!(REG_LCD_CTRL & LCD_CTRL_ENA)) {
+			enable = 0;
+			break;
+		}
+	}
+
+	if (enable == 0) {
+//		printf("Put CPU into hibernate mode.\n");
+		jz_sync();
+		REG_RTC_RCR = RTC_RCR_AIE | RTC_RCR_AE | RTC_RCR_RTCE;
+		REG_RTC_HWRSR = 0;
+		REG_RTC_HSPR = 0x12345678;
+		REG_RTC_RSAR = REG_RTC_RSR + 2;
+		REG_RTC_HWCR |= RTC_HWCR_EALM;
+		REG_RTC_HRCR |= 0x0fe0;
+		REG_RTC_HWFCR |= (0x00FF << 4);
+	   	REG_RTC_HCR |= RTC_HCR_PD;
+	}
+	else {
+		if (jzfb.panel.cfg & LCD_CFG_RECOVER) {
+			REG_LCD_CTRL &= ~LCD_CTRL_ENA;
+			REG_LCD_CFG |= LCD_CFG_RECOVER;
+			REG_LCD_CTRL |= LCD_CTRL_ENA;
+		}
+	}
+	return 0;
+}
+#endif
 static int  jz_lcd_hw_init(vidinfo_t *vid)
 {
 	struct jz_fb_info *fbi = &vid->jz_fb;

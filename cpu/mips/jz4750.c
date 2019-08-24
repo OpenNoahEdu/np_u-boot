@@ -22,14 +22,16 @@
 
 #include <config.h>
 
-#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 
 #include <common.h>
 #include <command.h>
 #ifdef CONFIG_JZ4750
 #include <asm/jz4750.h>
-#else
+#elif defined(CONFIG_JZ4750D)
 #include <asm/jz4750d.h>
+#elif defined(CONFIG_JZ4750L)
+#include <asm/jz4750l.h>
 #endif
 
 extern void board_early_init(void);
@@ -284,7 +286,7 @@ void sdram_init(void)
 	REG_EMC_DMAR0 = EMC_DMAR0_BASE | EMC_DMAR_MASK_128_128;
 #endif
 
-	REG_EMC_BCR = 0;	/* Disable bus release */
+	REG_EMC_BCR &= ~EMC_BCR_BRE;	/* Disable bus release */
 	REG_EMC_RTCSR = 0;	/* Disable clock for counting */
 
 	/* Basic DMCR value */
@@ -429,6 +431,7 @@ static void rtc_init(void)
 
 int jz_board_init(void)
 {
+	__cpm_start_all();
 	board_early_init();  /* init gpio, pll etc. */
 #ifndef CONFIG_NAND_U_BOOT
 #ifndef CONFIG_FPGA

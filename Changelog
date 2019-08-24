@@ -1,3 +1,13 @@
+2009-08-14 Wolfgang Wang <lgwang@ingenic.cn>
+
+	Add macros "CONFIG_JZ4750 CONFIG_JZ4760" control for cmd_msc.c
+
+	Changed file:
+	common/cmd_msc.c
+
+2009.05.14
+* Add Jz4750L platform: F4750L board(which is a FPGA board).
+
 2009.05.06 
 * Add Jz4755 platform: CETUS board.
 	

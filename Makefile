@@ -2097,8 +2097,20 @@ incaip_config: unconfig
 tb0229_config: unconfig
 	@$(MKCONFIG) $(@:_config=) mips mips tb0229
 #########################################################################
-## MIPS32 Jz47XX
+## MIPS32 Jz4XXX
 #########################################################################
+f4760_config		: 	unconfig
+	@ >include/config.h
+	@echo "#define CONFIG_F4760 1" >>include/config.h
+	@./mkconfig -a f4760 mips mips f4760
+
+f4760_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for f4760"
+	@./mkconfig -a f4760 mips mips f4760
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4760/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
 fuwa_config		: 	unconfig
 	@ >include/config.h
 	@echo "#define CONFIG_FUWA 1" >>include/config.h
@@ -2114,6 +2126,18 @@ fuwa1_config		: 	unconfig
 	@ >include/config.h
 	@echo "#define CONFIG_FUWA1 1" >>include/config.h
 	@./mkconfig -a fuwa1 mips mips fuwa1
+
+f4750l_config		: 	unconfig
+	@ >include/config.h
+	@echo "#define CONFIG_F4750L 1" >>include/config.h
+	@./mkconfig -a f4750l mips mips f4750l
+
+f4750l_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for f4750l"
+	@./mkconfig -a f4750l mips mips f4750l
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4750l/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
 cetus_nand_config	:	unconfig
 	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h

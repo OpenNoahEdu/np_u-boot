@@ -20,7 +20,13 @@
 
 #include <common.h>
 #include <asm/io.h>
+
+#if defined(CONFIG_JZ4750)
 #include <asm/jz4750.h>
+#endif
+#if defined(CONFIG_JZ4750D)
+#include <asm/jz4750d.h>
+#endif
 
 /*
  * External routines
@@ -218,7 +224,7 @@ int  mmc_init(void)
 	int retries, wait;
 	u8 *resp;
 
-	__gpio_as_msc0_8bit();
+	__gpio_as_msc();
 	__msc_reset();
 	MMC_IRQ_MASK();	
 	REG_MSC_CLKRT = 7;    //250k
@@ -263,12 +269,29 @@ static void gpio_init(void)
 	/*
 	 * Initialize SDRAM pins
 	 */
+#if CONFIG_NR_DRAM_BANKS == 2   /* Use Two Banks: DCS0 and DCS1 */
+	__gpio_as_sdram_x2_32bit();
+#else
 	__gpio_as_sdram_32bit();
+#endif
 
 	/*
-	 * Initialize UART1 pins
+	 * Initialize UART3 pins
 	 */
-	__gpio_as_uart3();
+	switch (CFG_UART_BASE) {
+	case UART0_BASE:
+		__gpio_as_uart0();
+		break;
+	case UART1_BASE:
+		__gpio_as_uart1();
+		break;
+	case UART2_BASE:
+		__gpio_as_uart2();
+		break;
+	case UART3_BASE:
+		__gpio_as_uart3();
+		break;
+	}
 }
 
 /*

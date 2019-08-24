@@ -380,10 +380,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	/* initialize malloc() area */
 	mem_malloc_init();
 	malloc_bin_reloc();
-
+#if !defined(CONFIG_FPGA) || defined(CONFIG_NAND_U_BOOT) || defined(CONFIG_NAND_SPL)
 #if (CONFIG_COMMANDS & CFG_CMD_NAND)
 	puts ("NAND:");
 	nand_init();		/* go init the NAND */
+#endif
 #endif
 
 	/* relocate environment function pointers etc. */
