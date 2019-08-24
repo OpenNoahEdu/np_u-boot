@@ -91,6 +91,7 @@ Known problems or limitations with current version
 #define SD_SEND_OP_COND          41   /* bcr  [31:0] OCR         R3  */
 #define SET_BUS_WIDTH            6    /* ac   [1:0] bus width    R1  */    
 #define SEND_SCR                 51   /* adtc [31:0] staff       R1  */   
+#define SD_SEND_IF_COND          8    /* adtc [31:0] staff	 R1  */
 
 /* Don't change the order of these; they are used in dispatch tables */
 enum mmc_rsp_t {

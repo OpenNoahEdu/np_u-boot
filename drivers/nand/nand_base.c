@@ -133,7 +133,7 @@ static struct nand_oobinfo nand_oob_128 = {
 		70, 71,	72, 73,	74, 75, 76, 77},
 	.oobfree = { {2, 4}, {78, 50} }
 };
-#elif defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ4760)
+#elif defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810)
 #if (CFG_NAND_BCH_BIT == 8)
 static struct nand_oobinfo nand_oob_64 = {
 	.useecc = MTD_NANDECC_AUTOPLACE,
@@ -2669,7 +2669,7 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 {
 	int i, j, nand_maf_id, nand_dev_id, busw;
 	struct nand_chip *this = mtd->priv;
-
+	int master_id;
 	/* Get buswidth to select the correct functions*/
 	busw = this->options & NAND_BUSWIDTH_16;
 
@@ -2717,7 +2717,9 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 	/* Read manufacturer and device IDs */
 	nand_maf_id = this->read_byte(mtd);
 	nand_dev_id = this->read_byte(mtd);
-
+	
+	master_id = (nand_maf_id << 8) |nand_dev_id; 
+	
 	/* Print and store flash device information */
 	for (i = 0; nand_flash_ids[i].name != NULL; i++) {
 
@@ -2733,23 +2735,47 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 
  		/* New devices have all the information in additional id bytes */
 		if (!nand_flash_ids[i].pagesize) {
-			int extid;
+			int extid, extid_3th;
 			/* The 3rd id byte contains non relevant data ATM */
-			extid = this->read_byte(mtd);
+			extid_3th = extid = this->read_byte(mtd);
 			/* The 4th id byte is the important one */
 			extid = this->read_byte(mtd);
-			/* Calc pagesize */
-			mtd->oobblock = 1024 << (extid & 0x3);
-			extid >>= 2;
-			/* Calc oobsize */
-			mtd->oobsize = (8 << (extid & 0x01)) * (mtd->oobblock / 512);
-			extid >>= 2;
-			/* Calc blocksize. Blocksize is multiples of 64KiB */
-			mtd->erasesize = (64 * 1024)  << (extid & 0x03);
-			extid >>= 2;
-			/* Get buswidth information */
-			busw = (extid & 0x01) ? NAND_BUSWIDTH_16 : 0;
 
+		if((master_id == 0xecd5) && (extid_3th == 0x94)) {
+				/* Calc pagesize */
+				mtd->oobblock = 2048 << (extid & 0x3);
+				extid >>= 2;
+				
+				/* Calc oobsize */
+				mtd->oobsize = (8 << (extid & 0x3)) * (mtd->oobblock >> 9);
+				
+				if(mtd->oobsize > 128)
+					mtd->oobsize =  128;
+				
+				/* Calc blocksize. Blocksize is multiples of 64KiB */
+				mtd->erasesize = (128 * 1024) << ( extid & 0x3);
+							
+				/* Get buswidth information */
+				busw =  0;
+			} else {			
+				/* Calc pagesize */
+				mtd->oobblock = 1024 << (extid & 0x3);
+				//printf("pagesize=mtd->oobblock=%d\n" , mtd->oobblock);
+				extid >>= 2;
+				/* Calc oobsize */
+				mtd->oobsize = (8 << (extid & 0x01)) * (mtd->oobblock / 512);
+
+				//printf("oobsize=%d\n" , mtd->oobsize);
+
+				extid >>= 2;
+				/* Calc blocksize. Blocksize is multiples of 64KiB */
+				mtd->erasesize = (64 * 1024)  << (extid & 0x03);
+				//printf("blocksize=mtd->erasesize=%d\n" , mtd->erasesize);
+
+				extid >>= 2;
+				/* Get buswidth information */
+				busw = (extid & 0x01) ? NAND_BUSWIDTH_16 : 0;
+			}
 		} else {
 			/* Old devices have this data hardcoded in the
 			 * device id table */

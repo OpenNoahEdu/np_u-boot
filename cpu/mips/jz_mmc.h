@@ -21,7 +21,7 @@
 
 #define ID_TO_RCA(x) ((x)+1)
 
-#define MMC_OCR_ARG		0x00ff8000	/* Argument of OCR */
+#define MMC_OCR_ARG		0x40ff8000	/* Argument of OCR */
 
 enum mmc_result_t {
 	MMC_NO_RESPONSE        = -1,
@@ -54,6 +54,7 @@ typedef struct MMC_INFO
 {
 	int             id;     /* Card index */
         int             sd;     /* MMC or SD card */
+	int 		highcap; /*high or low capacity*/
         int             rca;    /* RCA */
         u32             scr;    /* SCR 63:32*/        
 	int             flags;  /* Ejected, inserted */

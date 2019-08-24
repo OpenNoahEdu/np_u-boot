@@ -1,3 +1,13 @@
+2010-04-30 Wolfgang Wang <lgwang@ingenic.cn>
+
+	Fix a large memory bug(); "lib_mips/board.c" add "#include <asm/jzsoc.h>"
+	
+	Added file:
+	asm-mips/jzsoc.h
+
+	Changed file:
+	lib_mips/board.c
+
 2010-02-03 Wolfgang Wang <lgwang@ingenic.cn>
 
 	Support large DRAM(jz4750>128M, jz4760>256M)

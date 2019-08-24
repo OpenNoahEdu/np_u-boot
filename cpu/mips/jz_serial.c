@@ -24,10 +24,11 @@
  */
 
 #include <config.h>
+#include <asm/jz_serial.h>
 
 #if defined(CONFIG_JZ4730) || defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) \
 	|| defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) || defined(CONFIG_JZ5730)\
-	|| defined(CONFIG_JZ4760)
+	|| defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810)
 
 #include <common.h>
 
@@ -52,6 +53,9 @@
 #if defined(CONFIG_JZ4760)
 #include <asm/jz4760.h>
 #endif
+#if defined(CONFIG_JZ4810)
+#include <asm/jz4810.h>
+#endif
 
 #undef UART_BASE
 #ifndef CFG_UART_BASE
@@ -61,7 +65,7 @@
 #endif
 
 #define GCC_REG_ACCUM "$0"
-
+#if 0
 #define do_div64_32(res, high, low, base) ({    \
 	unsigned long __quot32, __mod32; \
 	unsigned long __cf, __tmp, __tmp2, __i; \
@@ -144,14 +148,14 @@ static unsigned short * get_divisor(void)
     
 #if defined(CONFIG_FPGA)
 	uartclk = CFG_EXTAL / CFG_DIV;
-#elif defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D)
+#elif defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810)
 	if (CFG_EXTAL > 16000000) {
 		REG_CPM_CPCCR |= CPM_CPCCR_ECS;
 		uartclk = CFG_EXTAL / 2;
 	} else {
 		REG_CPM_CPCCR &= ~CPM_CPCCR_ECS;
         uartclk = CFG_EXTAL;
-    }
+	}
 #else /* CONFIG_JZ4740 or CONFIG_JZ4730 */
     uartclk = CFG_EXTAL;
 #endif
@@ -222,6 +226,24 @@ static unsigned short * get_divisor(void)
 
 	return quot1;
 }
+#else
+static unsigned short quot1[3] = {0}; /* quot[0]:baud_div, quot[1]:umr, quot[2]:uacr */
+/* Calculate baud_div, umr and uacr for any frequency of uart */
+static unsigned short * get_divisor(void)
+{
+#ifdef UART_DIV
+    REG_CPM_CPCCR |= CPM_CPCCR_ECS;
+#else
+    REG_CPM_CPCCR &= ~CPM_CPCCR_ECS;
+#endif
+    
+	quot1[0] = DIV_BEST;
+	quot1[1] = UMR_BEST;
+	quot1[2] = UACR_BEST;
+
+	return quot1;    
+}
+#endif
 
 /******************************************************************************
 *
@@ -268,15 +290,17 @@ void serial_setbrg (void)
 	volatile u8 *uart_lcr = (volatile u8 *)(UART_BASE + OFF_LCR);
 	volatile u8 *uart_dlhr = (volatile u8 *)(UART_BASE + OFF_DLHR);
 	volatile u8 *uart_dllr = (volatile u8 *)(UART_BASE + OFF_DLLR);
-    volatile u8 *uart_umr = (volatile u8 *)(UART_BASE + OFF_UMR);
+	volatile u8 *uart_umr = (volatile u8 *)(UART_BASE + OFF_UMR);
  	volatile u8 *uart_uacr = (volatile u8 *)(UART_BASE + OFF_UACR);
 	u16 baud_div, tmp;
 
-    get_divisor();
-    
-    *uart_umr = quot1[1];
-    *uart_uacr = quot1[2];
-    baud_div = quot1[0];
+	get_divisor();
+
+#ifndef CONFIG_JZ4730    
+	*uart_umr = quot1[1];
+	*uart_uacr = quot1[2];
+#endif    
+	baud_div = quot1[0];
     
 	tmp = *uart_lcr;
 	tmp |= UART_LCR_DLAB;
@@ -327,6 +351,24 @@ int serial_tstc (void)
 		return (1);
 	}
 	return 0;
+}
+
+void serial_put_hex(unsigned int  d)
+{
+	unsigned char c[12];
+	char i;
+	for(i = 0; i < 8;i++)
+	{
+		c[i] = (d >> ((7 - i) * 4)) & 0xf;
+		if(c[i] < 10)
+			c[i] += 0x30;
+		else
+			c[i] += (0x41 - 10);
+	}
+	c[8] = '\n';
+	c[9] = 0;
+	serial_puts(c);
+
 }
 
 #endif /* CONFIG_JZ4730 || CONFIG_JZ4740 || CONFIG_JZ4750 || CONFIG_JZ45730 */

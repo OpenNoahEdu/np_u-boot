@@ -163,13 +163,22 @@ static void jzsoc_nand_enable_bch_hwecc(struct mtd_info* mtd, int mode)
  * @dat:        data to be corrected
  * @idx:        the index of error bit in an eccsize
  */
-static void bch_correct(u8 * dat, int idx)
+static void bch_correct(struct mtd_info *mtd, u8 * dat, int idx)
 {
+	struct nand_chip *this = (struct nand_chip *)(mtd->priv);
 	int i, bit;		/* the 'bit' of i byte is error */
 	i = (idx - 1) >> 3;
 	bit = (idx - 1) & 0x7;
-	if (i < 512)
+
+#ifdef CFG_NAND_BCH_WITH_OOB
+	if (i < this->eccsize)
+		((struct buf_be_corrected *)dat)->data[i] ^= (1 << bit);
+	else if (i <  (this->eccsize + CFG_NAND_ECC_POS / this->eccsteps))
+		((struct buf_be_corrected *)dat)->oob[i - this->eccsize] ^= (1 << bit);
+#else
+	if (i < this->eccsize)
 		dat[i] ^= (1 << bit);
+#endif
 }
 
 /**
@@ -222,29 +231,29 @@ static int jzsoc_nand_bch_correct_data(struct mtd_info *mtd, u_char * dat, u_cha
 			u32 errcnt = (stat & BCH_INTS_ERRC_MASK) >> BCH_INTS_ERRC_BIT;
 			switch (errcnt) {
 			case 8:
-				bch_correct(dat, (REG_BCH_ERR3 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR3 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
 				/* FALL-THROUGH */
 			case 7:
-				bch_correct(dat, (REG_BCH_ERR3 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR3 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
 				/* FALL-THROUGH */
 			case 6:
-				bch_correct(dat, (REG_BCH_ERR2 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR2 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
 				/* FALL-THROUGH */
 			case 5:
-				bch_correct(dat, (REG_BCH_ERR2 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR2 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
 				/* FALL-THROUGH */
 			case 4:
-				bch_correct(dat, (REG_BCH_ERR1 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR1 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
 				/* FALL-THROUGH */
 			case 3:
-				bch_correct(dat, (REG_BCH_ERR1 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR1 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
 				/* FALL-THROUGH */
 			case 2:
-				bch_correct(dat, (REG_BCH_ERR0 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
+			  bch_correct(mtd, dat, (REG_BCH_ERR0 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
 				/* FALL-THROUGH */
 			case 1:
-				bch_correct(dat, (REG_BCH_ERR0 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);
-				return 0;
+			  bch_correct(mtd, dat, (REG_BCH_ERR0 & BCH_ERR_INDEX_EVEN_MASK) >> BCH_ERR_INDEX_EVEN_BIT);;
+			  break;
 			default:
 				break;
 			}

@@ -47,14 +47,16 @@
 #ifdef CONFIG_JZ4760
 #include <asm/jz4760.h>
 #endif	
-
+#ifdef CONFIG_JZ4810
+#include <asm/jz4810.h>
+#endif		
 #if defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L)
 #define JZ4750_NANDBOOT_CFG0 (0x55555500 | (CFG_NAND_BW8*0xff))
 #define JZ4750_NANDBOOT_CFG1 0x55555555	
 #define JZ4750_NANDBOOT_CFG2 ((CFG_NAND_PAGE_SIZE==2048)&0xff0000) | ((CFG_NAND_PAGE_SIZE!=512)&0xff00) | ((CFG_NAND_ROW_CYCLE==3)&0xff)
 #endif
 
-#if defined(CONFIG_JZ4760)
+#if defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810)
 #define JZ4760_NANDBOOT_CFG0 (0x55555500 | (CFG_NAND_BW8*0xff))
 #define JZ4760_NANDBOOT_CFG1 0x55555555	
 #define JZ4760_NANDBOOT_CFG2 ((CFG_NAND_PAGE_SIZE==2048)&0xff0000) | ((CFG_NAND_PAGE_SIZE!=512)&0xff00) | ((CFG_NAND_ROW_CYCLE==3)&0xff)
@@ -64,7 +66,6 @@
 #define JZ_SPIBOOT_CFG0      0x55020304
 #define	CFG_SSI_GR           ((6000000 + (CFG_SPI_MAX_FREQ - 1)) / CFG_SPI_MAX_FREQ - 1)
 #define JZ_SPIBOOT_CFG1      (0x00aa55aa | (CFG_SSI_GR << 24))
-
 
 #define RVECENT(f,n) \
    b f; nop
@@ -101,7 +102,7 @@ _start:
 	.word JZ4750_NORBOOT_CFG	/* fetched during NOR Boot */
 #endif
 #endif /* defined(CONFIG_JZ4750) || defined(CONFIG_JZ4750D) || defined(CONFIG_JZ4750L) */
-#if defined(CONFIG_JZ4760)
+#if defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810)
 #if defined(CONFIG_NAND_SPL)
 	/* First three words fetched by CPU during NAND Boot */
 	/* First 4 flags fetched by CPU during NAND Boot */
@@ -227,8 +228,8 @@ _start:
 #else
 	.word JZ4760_NORBOOT_CFG
 #endif
-#endif /* CONFIG_JZ4760 */
-	
+#endif /* CONFIG_JZ4760 || CONFIG_JZ4810 */
+
 #if !defined(CONFIG_JzRISC)
 	RVECENT(reset,0)	/* U-boot entry point */
 	RVECENT(reset,1)	/* software reboot */
@@ -436,6 +437,17 @@ reset:
 	nop
 #endif /* CONFIG_JZ4730 */
 
+#ifdef CONFIG_JZ4760
+	/*
+	 * Check reset status
+	 */
+	la	t0, CPM_RSR
+	lw	t1, 0(t0)
+	andi	t1, 0x4
+	bnez	t1, resume_from_sleep
+	nop
+#endif /* CONFIG_JZ4760 */
+	
 #if !defined(CONFIG_NAND_SPL) && !defined(CONFIG_MSC_SPL) && !defined(CONFIG_SPI_SPL)
 	/* Clear watch registers.
 	 */
@@ -571,7 +583,7 @@ reset:
 	j	t9
 	nop
 #else
-#ifdef CONFIG_JZ4760
+#if defined(CONFIG_JZ4760) || defined(CONFIG_JZ4810) 
 	/* Sdram will be access when "la sp, 0(t0)", so it should be
 	 * configured before accessing,	but it needn't be configured
 	 * again when nand boot for it has been initialized in spl
@@ -608,14 +620,13 @@ reset:
 	sw	t1, 0x4(t0)
 #endif /*config_ddrc*/	
 #endif
-#endif /* Jz4760 */
+#endif /* Jz4760 || jz4810 */
 	li	t0, CFG_SDRAM_BASE + CFG_INIT_SP_OFFSET
 	la	sp, 0(t0)
 
 	la	t9, board_init_f
 	j	t9
 	nop
-
 
 /*
  * void relocate_code (addr_sp, gd, addr_moni)
@@ -862,3 +873,23 @@ resume_from_hibernate:
 	nop
 
 #endif /* CONFIG_JZ4730 */
+
+#ifdef CONFIG_JZ4760
+
+	/*
+	 * cpu was reset from sleep  mode(when power down p0)
+	 */
+resume_from_sleep:
+
+	/*
+	 * jump to resume entry point
+	 */
+	la	t0, CPM_CPSPR
+	lw	t1, 0(t0)
+	li	t0, 0x80000000
+	or	t0, t1
+
+	j	t0
+	nop
+
+#endif /* CONFIG_JZ4760 */

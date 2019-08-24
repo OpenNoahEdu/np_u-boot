@@ -99,6 +99,7 @@ static unsigned char oob_buf[512] = {0};
 extern void flush_cache_all(void);
 extern int serial_init(void);
 extern void serial_puts(const char *s);
+extern void serial_put_hex(unsigned int d);
 extern void sdram_init(void);
 extern void pll_init(void);
 
@@ -137,7 +138,7 @@ static inline void nand_read_buf(void *buf, int count, int bw)
  */
 static void bch_correct(unsigned char *dat, int idx)
 {
-	int i, bit;  // the 'bit' of i byte is error 
+	int i, bit;  // the 'bit' of i byte is error
 	i = (idx - 1) >> 3;
 	bit = (idx - 1) & 0x7;
 	if (i < ECC_BLOCK)
@@ -204,7 +205,7 @@ static int nand_read_oob(int page_addr, u8 *buf, int size)
 static int nand_read_page(int page_addr, unsigned char *dst, unsigned char *oobbuf)
 {
 	unsigned char *data_buf = dst;
-	int i, j;
+	int i, j,eccbytes = (par_size + 1) / 2;
 
 	/* Send READ0 command */
 	__nand_cmd(NAND_CMD_READ0);
@@ -248,7 +249,8 @@ static int nand_read_page(int page_addr, unsigned char *dst, unsigned char *oobb
 	for (i = 0; i < ecc_count; i++) {
 		unsigned int stat;
 
-		__ecc_cnt_dec(2*(ECC_BLOCK + par_size));
+		__ecc_cnt_dec(2 * ECC_BLOCK + par_size);
+		
 
                 /* Enable BCH decoding */
 		REG_BCH_INTS = 0xffffffff;
@@ -259,11 +261,12 @@ static int nand_read_page(int page_addr, unsigned char *dst, unsigned char *oobb
 
                 /* Write 512 bytes and par_size parities to REG_BCH_DR */
 		for (j = 0; j < ECC_BLOCK; j++) {
+			//serial_put_hex(data_buf[j]);
 			REG_BCH_DR = data_buf[j];
 		}
 
-		for (j = 0; j < par_size; j++) {
-			REG_BCH_DR = oob_buf[CFG_NAND_ECC_POS + i*par_size + j];
+		for (j = 0; j < eccbytes; j++) {
+			REG_BCH_DR = oob_buf[CFG_NAND_ECC_POS + i * eccbytes + j];
 		}
 
 		/* Wait for completion */
@@ -279,6 +282,7 @@ static int nand_read_page(int page_addr, unsigned char *dst, unsigned char *oobb
 			}
 			else {
 				unsigned int errcnt = (stat & BCH_INTS_ERRC_MASK) >> BCH_INTS_ERRC_BIT;
+				
 				switch (errcnt) {
 				case 8:
 					bch_correct(data_buf, (REG_BCH_ERR3 & BCH_ERR_INDEX_ODD_MASK) >> BCH_ERR_INDEX_ODD_BIT);
@@ -361,11 +365,11 @@ static void gpio_init(void)
 		__gpio_as_uart3();
 		break;
 	}
-#ifdef CONFIG_FPGA 
+#ifdef CONFIG_FPGA
 	__gpio_as_nor();
 
-        /* if the delay isn't added on FPGA, the first line that uart 
-	 * to print will not be normal. 
+        /* if the delay isn't added on FPGA, the first line that uart
+	 * to print will not be normal.
 	 */
 	{
 		volatile int i=1000;
@@ -390,7 +394,16 @@ void spl_boot(void)
 	/*
 	 * Init hardware
 	 */
-	__cpm_start_all();
+
+        //__cpm_start_all();
+	__cpm_start_uart1();
+	__cpm_start_mdma();
+//	__cpm_start_bdma();
+	__cpm_start_emc();
+	__cpm_start_ddr();
+
+	/* enable mdmac's clock */
+	REG_MDMAC_DMACKE = 0x3;
 	gpio_init();
 	serial_init();
 
@@ -399,6 +412,26 @@ void spl_boot(void)
 #ifndef CONFIG_FPGA
 	pll_init();
 #endif
+
+
+//add driver power
+#ifndef CONFIG_FPGA
+
+#ifndef CONFIG_MOBILE_SDRAM
+	REG_EMC_PMEMPS0 = EMC_PMEMPS0_PDDQ | EMC_PMEMPS0_PDDQS |
+		EMC_PMEMPS0_SCHMITT_TRIGGER_DQ | EMC_PMEMPS0_SCHMITT_TRIGGER_DQS;
+#ifdef CONFIG_SDRAM_DDR2
+//	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE |
+//		EMC_PMEMPS1_STRENGTH_DQS_FULL | EMC_PMEMPS1_STRENGTH_DQ_FULL;
+	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE;
+#else /* ifdef CONFIG_SDRAM_DDR2 */
+	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS |
+		EMC_PMEMPS1_STRENGTH_DQS_FULL | EMC_PMEMPS1_STRENGTH_DQ_FULL;
+#endif /* ifdef CONFIG_SDRAM_DDR2 */
+	REG_EMC_PMEMPS2 = EMC_PMEMPS2_STRENGTH_ALL_FULL;
+#endif /* ifndef CONFIG_MOBILE_SDRAM */
+
+#endif /* ifndef CONFIG_FPGA */
 	sdram_init();
 
 	bus_width = (CFG_NAND_BW8==1) ? 8 : 16;
@@ -410,9 +443,9 @@ void spl_boot(void)
 	oob_size = page_size / 32;
 	ecc_count = page_size / ECC_BLOCK;
 	if (CFG_NAND_BCH_BIT == 8)
-		par_size = 13;
+		par_size = 26;
 	else
-		par_size = 7;
+		par_size = 13;
 
 #if CFG_NAND_BW8 == 1
 	REG_NEMC_SMCR1 = CFG_NAND_SMCR1;

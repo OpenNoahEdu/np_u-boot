@@ -31,7 +31,7 @@
 #define u16 unsigned short
 #define u8 unsigned char
 static int rca;
-static int sd2_0 = 0;
+static int highcap = 0;
 
 /*
  * GPIO definition
@@ -119,14 +119,14 @@ static int mmc_block_writem(u32 src, u32 num, u8 *dst)
 	nob  = num / 512;
 
 	if (nob == 1) {
-		if (sd2_0)
+		if (highcap)
 			resp = mmc_cmd(24, src, 0x419, MSC_CMDAT_RESPONSE_R1);
 		else
 			resp = mmc_cmd(24, src * 512, 0x419, MSC_CMDAT_RESPONSE_R1);
 
 		sorm = 0;
 	} else {
-		if (sd2_0)
+		if (highcap)
 			resp = mmc_cmd(25, src, 0x419, MSC_CMDAT_RESPONSE_R1); // for sdhc card
 		else
 			resp = mmc_cmd(25, src * 512, 0x419, MSC_CMDAT_RESPONSE_R1);
@@ -188,14 +188,14 @@ static int mmc_block_readm(u32 src, u32 num, u8 *dst)
 	nob  = num / 512;
 
 	if (nob == 1) {
-		if (sd2_0)
+		if (highcap)
 			resp = mmc_cmd(17, src, 0x409, MSC_CMDAT_RESPONSE_R1);
 		else
 			resp = mmc_cmd(17, src * 512, 0x409, MSC_CMDAT_RESPONSE_R1);
 			
 		sorm = 0;
 	} else {
-		if (sd2_0)
+		if (highcap)
 			resp = mmc_cmd(18, src, 0x409, MSC_CMDAT_RESPONSE_R1);
 		else
 			resp = mmc_cmd(18, src * 512, 0x409, MSC_CMDAT_RESPONSE_R1);
@@ -279,7 +279,7 @@ static void sd_init(void)
 	cardaddr = (resp[4] << 8) | resp[3]; 
 	rca = cardaddr << 16;
 	resp = mmc_cmd(9, rca, 0x2, MSC_CMDAT_RESPONSE_R2);
-	sd2_0 = (resp[14] & 0xc0) >> 6;
+	highcap = (resp[14] & 0xc0) >> 6;
 	REG_MSC_CLKRT = 2;    //2 is ok ,dont't grater
 	resp = mmc_cmd(7, rca, 0x41, MSC_CMDAT_RESPONSE_R1);
 	resp = mmc_cmd(55, rca, 0x1, MSC_CMDAT_RESPONSE_R1);
@@ -296,6 +296,7 @@ static int  mmc_init(void)
 	MMC_IRQ_MASK();	
 	__cpm_select_msc_clk(0,1);
 	REG_MSC_CLKRT = 7;    //250k
+	REG_MSC_RDTO = 0xffffffff;
 
 	resp = mmc_cmd(12, 0, 0x41, MSC_CMDAT_RESPONSE_R1);
 	/* reset */
@@ -303,7 +304,7 @@ static int  mmc_init(void)
 	resp = mmc_cmd(8, 0x1aa, 0x1, MSC_CMDAT_RESPONSE_R1);
 	resp = mmc_cmd(55, 0, 0x1, MSC_CMDAT_RESPONSE_R1);
 	if(!(resp[0] & 0x20) && (resp[5] != 0x37)) { 
-		resp = mmc_cmd(1, 0xff8000, 0x3, MSC_CMDAT_RESPONSE_R3);
+		resp = mmc_cmd(1, 0x40ff8000, 0x3, MSC_CMDAT_RESPONSE_R3);
 		retries = 500;
 		while (retries-- && resp && !(resp[4] & 0x80)) {
 			resp = mmc_cmd(1, 0x40300000, 0x3, MSC_CMDAT_RESPONSE_R3);
@@ -311,18 +312,23 @@ static int  mmc_init(void)
 			udelay(1000);
 		}
 
-		if (resp[4]== 0x80) 
+		if ((resp[4] & 0x80 ) == 0x80) 
 			serial_puts("MMC init ok\n");
 		else 
 			serial_puts("MMC init fail\n");
 
+		if((resp[4] & 0x60) == 0x40)
+			highcap = 1;
+		else
+			highcap = 0;
+	
 		/* try to get card id */
 		resp = mmc_cmd(2, 0, 0x2, MSC_CMDAT_RESPONSE_R2);
 		resp = mmc_cmd(3, 0x10, 0x1, MSC_CMDAT_RESPONSE_R1);
 
 		REG_MSC_CLKRT = 2;	/* 16/1 MHz */
 		resp = mmc_cmd(7, 0x10, 0x1, MSC_CMDAT_RESPONSE_R1);
-		resp = mmc_cmd(6, 0x3b70101, 0x401, MSC_CMDAT_RESPONSE_R1);
+		resp = mmc_cmd(6, 0x3b70101, 0x441, MSC_CMDAT_RESPONSE_R1);
 	}
 	else
 		sd_init();

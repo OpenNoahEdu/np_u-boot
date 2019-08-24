@@ -38,13 +38,19 @@
 #include <config.h>
 #include <common.h>
 #include <malloc.h>
+
 #ifndef CONFIG_FPGA
-#if defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750)
+#if defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) || defined(CONFIG_JZ4760)
 #if defined(CONFIG_JZ4740) 
 #include <asm/jz4740.h>
 #elif defined(CONFIG_JZ4750) 
 #include <asm/jz4750.h>
+#elif defined(CONFIG_JZ4760) 
+#include <asm/jz4760.h>
+#elif defined(CONFIG_JZ4810) 
+#include <asm/jz4810.h>
 #endif
+
 #include <net.h>
 struct eth_device *dev;
 #define CS8900_BASE ((u32)(dev->iobase))
@@ -246,7 +252,7 @@ static int jz_eth_rx (struct eth_device* dev)
 		printf ("packet too big!\n");
 #endif
 	for (addr = (unsigned short *) NetRxPackets[0], i = rxlen >> 1; i > 0;
-		 i--)
+		i--)
 		*addr++ = CS8900_RTDATA;
 	if (rxlen & 1)
 		*addr++ = CS8900_RTDATA;
@@ -364,7 +370,8 @@ int jz_enet_initialize(bd_t *bis)
 	dev->iobase = 0xa8000000;
 
 #elif defined(CONFIG_JZ4750)
-#if !defined(CONFIG_AQUILA)
+//#if !defined(CONFIG_AQUILA)
+#ifndef CONFIG_AQUILA
 #define RD_N_PIN (32*2 +25)
 #define WE_N_PIN (32*2 +26)
 #define CS3_PIN (32*2 +23)
@@ -377,6 +384,74 @@ int jz_enet_initialize(bd_t *bis)
 	REG_EMC_SMCR3 = reg;
 	dev->iobase = 0xac000000;
 #endif // !defined(CONFIG_AQUILA)
+
+#elif defined(CONFIG_JZ4760)
+#define RD_N_PIN (32*0 +16)  //gpa16
+#define WE_N_PIN (32*0 +17)  //gpa17
+
+#ifdef CONFIG_LEPUS
+#define WAIT_N (32*0 + 27)   //WAIT_N--->gpa27
+#define CS_PIN (32*0 + 26)   //CS6--->gpa26
+
+#elif defined(CONFIG_CYGNUS)
+#define CS_PIN (32*0 + 25)   //CS5--->gpa25
+#define WAIT_N (32*0 + 27)   //WAIT_N--->gpa27
+#define CS8900_RESET_PIN (32 * 1 +23)  //gpb23
+#endif
+	__gpio_as_func0(CS_PIN);
+	__gpio_as_func0(RD_N_PIN);
+	__gpio_as_func0(WE_N_PIN);
+
+	__gpio_as_func0(32 * 1 + 2);
+	__gpio_as_func0(32 * 1 + 3);
+
+
+#ifdef CONFIG_LEPUS
+	REG_GPIO_PXFUNS(0) = 0x0000ffff;
+	REG_GPIO_PXTRGC(0) = 0x0000ffff;
+	REG_GPIO_PXSELC(0) = 0x0000ffff;
+
+	__gpio_as_func0(WAIT_N);
+
+	reg = REG_NEMC_SMCR6;
+	reg = (reg & (~NEMC_SMCR_BW_MASK)) | NEMC_SMCR_BW_16BIT;
+	REG_NEMC_SMCR6 = reg;
+	dev->iobase = 0xb4000000;
+
+#elif defined(CONFIG_CYGNUS)
+	__gpio_as_output(CS8900_RESET_PIN);
+	__gpio_set_pin(CS8900_RESET_PIN);
+	udelay(10000);
+	__gpio_clear_pin(CS8900_RESET_PIN);
+
+	__gpio_as_func0(WAIT_N);
+
+	reg = REG_NEMC_SMCR5;
+	reg = (reg & (~NEMC_SMCR_BW_MASK)) | NEMC_SMCR_BW_16BIT;
+	REG_NEMC_SMCR5 = reg;
+	dev->iobase = 0xb5000000;
+#endif
+#elif defined(CONFIG_JZ4810)
+#define RD_N_PIN (32*0 +16)
+#define WE_N_PIN (32*0 +17)
+#define CS5_PIN (32*0 +25)
+#define CS8900_RESET_PIN (32 * 1 + 23)
+	__gpio_as_func0(CS5_PIN);
+	__gpio_as_func0(RD_N_PIN);
+	__gpio_as_func0(WE_N_PIN);
+
+	__gpio_as_func0(32 * 1 + 2);
+	__gpio_as_func0(32 * 1 + 3);
+
+	__gpio_as_output(CS8900_RESET_PIN);
+	__gpio_set_pin(CS8900_RESET_PIN);
+	udelay(10000);
+	__gpio_clear_pin(CS8900_RESET_PIN);
+
+	reg = REG_NEMC_SMCR5;
+	reg = (reg & (~NEMC_SMCR_BW_MASK)) | NEMC_SMCR_BW_16BIT;
+	REG_NEMC_SMCR5 = reg;
+	dev->iobase = 0xb5000000;
 #endif
 
 	sprintf(dev->name, "JZ ETHERNET");

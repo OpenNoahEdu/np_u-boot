@@ -32,10 +32,22 @@
 #define CONFIG_JZ4760		1  /* Jz4760 SoC */
 #define CONFIG_FPGA		1  /* f4760 is an FPGA board */
 #define CONFIG_F4760		1  /* f4760 validation board */
-#define CONFIG_DDRC		1  /* use ddr controller */
-#define CONFIG_SDRAM_MDDR
-//#define CONFIG_SDRAM_DDR1
-//#define CONFIG_SDRAM_DDR2
+
+/* memory group */
+// [MAY CHANGE] RAM
+#ifdef CONFIG_SDRAM_MDDR
+#include "asm/jz_mem_nand_configs/MDDR_H5MS5122DFR-J3M.h"
+#elif defined CONFIG_SDRAM_DDR1
+#include "asm/jz_mem_nand_configs/DDR1_H5DU516ETR-E3C.h"
+#elif defined CONFIG_SDRAM_DDR2
+#include "asm/jz_mem_nand_configs/DDR2_H5PS1G63EFR-G7C.h"
+#elif defined CONFIG_MOBILE_SDRAM
+#include "asm/jz_mem_nand_configs/MSDRAM_H55S5122DFR.h"
+#else
+#include "asm/jz_mem_nand_configs/SDRAM_.h"
+#endif
+// [MAY CHANGE] NAND
+#include "asm/jz_mem_nand_configs/NAND_K9GAG08U0M.h"
 
 #define JZ4760_NORBOOT_CFG	JZ4760_NORBOOT_8BIT	/* NOR Boot config code */
 
@@ -62,6 +74,7 @@
 /* this must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <cmd_confdefs.h>
 
+// [MAY CHANGE] Boot Arguments
 #define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
 #if defined(CONFIG_SDRAM_MDDR)
@@ -124,45 +137,6 @@
 #define CFG_ENV_IS_IN_FLASH     1	/* use FLASH for environment vars	*/
 #else
 #define CFG_ENV_IS_IN_NAND	1	/* use NAND for environment vars	*/
-#endif
-
-/*-----------------------------------------------------------------------
- * NAND FLASH configuration
- */
-#if 1 // 4KB 8bit defaultly
-#define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      4096
-#define CFG_NAND_ROW_CYCLE	3     
-#define CFG_NAND_BLOCK_SIZE	(512 << 10)	/* NAND chip block size		*/
-#define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
-#endif
-#if 0
-#define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      2048
-#define CFG_NAND_ROW_CYCLE	3     
-#define CFG_NAND_BLOCK_SIZE	(256 << 10)	/* NAND chip block size		*/
-#define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
-#endif
-#if 0 //2KB 16bit 
-#define CFG_NAND_BW8		0               /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      2048
-#define CFG_NAND_ROW_CYCLE	3     
-#define CFG_NAND_BLOCK_SIZE	(128 << 10)	/* NAND chip block size		*/
-#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
-#endif
-#if 0
-#define CFG_NAND_BW8		0               /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      2048
-#define CFG_NAND_ROW_CYCLE	3     
-#define CFG_NAND_BLOCK_SIZE	(128 << 10)	/* NAND chip block size		*/
-#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
-#endif
-#if 0 // K9F1208
-#define CFG_NAND_BW8		1               /* Data bus width: 0-16bit, 1-8bit */
-#define CFG_NAND_PAGE_SIZE      512
-#define CFG_NAND_ROW_CYCLE	3     
-#define CFG_NAND_BLOCK_SIZE	(16 << 10)	/* NAND chip block size		*/
-#define CFG_NAND_BADBLOCK_PAGE	0		/* NAND bad block was marked at this page in a block, starting from 0 */
 #endif
 
 #define CFG_NAND_BCH_BIT        8               /* Specify the hardware BCH algorithm for 4760 (4|8) */
@@ -246,47 +220,7 @@
 
 #define CFG_DIRECT_FLASH_TFTP	1	/* allow direct tftp to flash */
 
-#ifndef CONFIG_DDRC
-/*-----------------------------------------------------------------------
- * SDRAM Info.
- */
-#define CONFIG_NR_DRAM_BANKS	1  /* SDRAM BANK Number: 1, 2*/
-
-//#define CONFIG_MOBILE_SDRAM	1	/* use mobile sdram */
-
-#ifndef CONFIG_MOBILE_SDRAM
-// SDRAM paramters
-#define SDRAM_BW16		0	/* Data bus width: 0-32bit, 1-16bit */
-#define SDRAM_BANK4		1	/* Banks each chip: 0-2bank, 1-4bank */
-#define SDRAM_ROW		13	/* Row address: 11 to 13 */
-#define SDRAM_COL		9	/* Column address: 8 to 12 */
-#define SDRAM_CASL		2	/* CAS latency: 2 or 3 */
-
-// SDRAM Timings, unit: ns
-#define SDRAM_TRAS		45	/* RAS# Active Time */
-#define SDRAM_RCD		20	/* RAS# to CAS# Delay */
-#define SDRAM_TPC		20	/* RAS# Precharge Time */
-#define SDRAM_TRWL		7	/* Write Latency Time */
-#define SDRAM_TREF	        7812	/* Refresh period: 4096 refresh cycles/64ms */
-
-#else /* Mobile SDRAM */
-// SDRAM paramters
-#define SDRAM_BW16		0	/* Data bus width: 0-32bit, 1-16bit */
-#define SDRAM_BANK4		1	/* Banks each chip: 0-2bank, 1-4bank */
-#define SDRAM_ROW		13	/* Row address: 11 to 13 */
-#define SDRAM_COL		9	/* Column address: 8 to 12 */
-#define SDRAM_CASL		2	/* CAS latency: 2 or 3 */
-
-// SDRAM Timings, unit: ns
-#define SDRAM_TRAS		50	/* RAS# Active Time */
-#define SDRAM_RCD		18	/* RAS# to CAS# Delay */
-#define SDRAM_TPC		20	/* RAS# Precharge Time */
-#define SDRAM_TRWL		7	/* Write Latency Time */
-#define SDRAM_TREF	        7812	/* Refresh period: 4096 refresh cycles/64ms */
-#endif /* CONFIG_MOBILE_SDRAM */
-
-#else /* CONFIG_DDRC */
-
+#if 0
 /*--------------------------------------------------------------------------------
  * DDR2 info
  */
@@ -389,8 +323,7 @@
 #define DDR_CLK_DIV 1    /* Clock Divider. auto refresh
 						  *	cnt_clk = memclk/(16*(2^DDR_CLK_DIV))
 						  */
-#endif /* CONFIG_DDRC */
-
+#endif
 /*-----------------------------------------------------------------------
  * Cache Configuration
  */
@@ -403,4 +336,4 @@
  */
 #define GPIO_LCD_PWM   		(32*2+14) /* GPE14 PWM4 */
 
-#endif	/* __CONFIG_H */
+#endif

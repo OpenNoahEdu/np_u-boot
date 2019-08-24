@@ -37,7 +37,6 @@
 #include "jz_mmc.h"
 
 #define CFG_MMC_BASE		0x80600000
-static int sd2_0 = 0;
 /*
  * GPIO definition
  */
@@ -103,6 +102,7 @@ do {						\
       	REG_MSC_IMASK = 0xffff;			\
       	REG_MSC_IREG = 0xffff;			\
 } while (0)
+
 
 /* Stop the MMC clock and wait while it happens */
 static inline int jz_mmc_stop_clock(void)
@@ -322,7 +322,6 @@ static int jz_mmc_transmit_data(struct mmc_request *req)
 #endif
 	return MMC_NO_ERROR;
 }
-
 
 /********************************************************************************************************************
 ** Name:	  int jz_mmc_exec_cmd()
@@ -567,7 +566,7 @@ int mmc_block_read(u8 *dst, ulong src, ulong len)
 		return retval;
 	}
 
-	if (sd2_0)
+	if (mmcinfo.highcap)
 		src /= len;
 	
 	mmc_send_cmd(&request, MMC_READ_SINGLE_BLOCK, src, 1,len, RESPONSE_R1, dst);
@@ -750,6 +749,8 @@ int mmc_select_card(void)
 			return retval;
 		}
 	}
+	
+	printf("mmc_select_card   mmcinfo.sd=%d,mmcinfo.highcap=%d\n",mmcinfo.sd,mmcinfo.highcap);
 	return 0;
 }
 
@@ -764,7 +765,7 @@ static void mmc_configure_card(void)
 	u32 rate;
 
 	/* Get card info */
-	if (sd2_0)
+	if (mmcinfo.highcap)
 		mmcinfo.block_num = (mmcinfo.csd.c_size + 1) << 10;
 	else
 		mmcinfo.block_num = (mmcinfo.csd.c_size + 1) * (1 << (mmcinfo.csd.c_size_mult + 2));
@@ -822,10 +823,12 @@ static int mmc_init_card_state(struct mmc_request *request)
 
 	switch (request->cmd) {
 	case MMC_GO_IDLE_STATE: /* No response to parse */
-		if (mmcinfo.sd)
-			mmc_simple_cmd(request, 8, 0x1aa, RESPONSE_R1);
-		else
+		if (mmcinfo.sd){
+			mmc_simple_cmd(request, SD_SEND_IF_COND, 0x1aa, RESPONSE_R1); //cmd8
+		}
+		else{	
 			mmc_simple_cmd(request, MMC_SEND_OP_COND, MMC_OCR_ARG, RESPONSE_R3);
+		}
 		break;
 
 	case 8:
@@ -835,26 +838,23 @@ static int mmc_init_card_state(struct mmc_request *request)
 
         case MMC_APP_CMD:
         	retval = mmc_unpack_r1(request,&r1,mmcinfo.state);
-		if (retval & (limit_41 < 100)) {
-			DEBUG(0, "mmc_init_card_state: unable to MMC_APP_CMD error=%d (%s)\n", 
-			      retval, mmc_result_to_string(retval));
-			limit_41++;
+		if(retval==0){
 			mmc_simple_cmd(request, SD_SEND_OP_COND, ocr, RESPONSE_R3);
-		} else if (limit_41 < 100) {
-			limit_41++;		
-			mmc_simple_cmd(request, SD_SEND_OP_COND, ocr, RESPONSE_R3);
-		} else{
+		}else{
 			/* reset the card to idle*/
-			mmc_simple_cmd(request, MMC_GO_IDLE_STATE, 0, RESPONSE_NONE);
 			mmcinfo.sd = 0;
-		}
+			mmc_simple_cmd(request, MMC_GO_IDLE_STATE, 0, RESPONSE_NONE);
+		}	
+		
 		break;
 
         case SD_SEND_OP_COND:
                 retval = mmc_unpack_r3(request, &r3);
                 if (retval) {
                   /* Try MMC card */
-                    mmc_simple_cmd(request, MMC_SEND_OP_COND, MMC_OCR_ARG, RESPONSE_R3);
+                	//mmc_simple_cmd(request, MMC_SEND_OP_COND, MMC_OCR_ARG, RESPONSE_R3);
+			mmcinfo.sd=0;
+			mmc_simple_cmd(request, MMC_GO_IDLE_STATE, 0, RESPONSE_NONE);
                     break;
 		}
 
@@ -871,7 +871,6 @@ static int mmc_init_card_state(struct mmc_request *request)
 		  mmc_simple_cmd(request, MMC_ALL_SEND_CID, 0, RESPONSE_R2_CID);
 		}
 		break;
-
 	case MMC_SEND_OP_COND:
 		retval = mmc_unpack_r3(request, &r3);
 		if (retval) {
@@ -882,9 +881,13 @@ static int mmc_init_card_state(struct mmc_request *request)
 
 		DEBUG(2,"mmc_init_card_state: read ocr value = 0x%08x\n", r3.ocr);
 		if (!(r3.ocr & MMC_CARD_BUSY)) {
-	                mmc_simple_cmd(request, MMC_SEND_OP_COND, MMC_OCR_ARG, RESPONSE_R3);
-		}
-		else {
+	    	            mmc_simple_cmd(request, MMC_SEND_OP_COND, MMC_OCR_ARG, RESPONSE_R3);
+		}else {
+			if((r3.ocr & (0x3 << 29 )) == 0x40000000){
+				mmcinfo.highcap = 1;
+			}else{
+				mmcinfo.highcap = 0;
+			}
 		        mmcinfo.sd = 0; /* MMC Card ready */
 			mmcinfo.state = CARD_STATE_READY;
 			mmc_simple_cmd(request, MMC_ALL_SEND_CID, 0, RESPONSE_R2_CID);
@@ -973,6 +976,8 @@ int mmc_init_card(void)
 	mmc_simple_cmd(&request, MMC_CIM_RESET, 0, RESPONSE_NONE); /* reset card */
 	mmc_simple_cmd(&request, MMC_GO_IDLE_STATE, 0, RESPONSE_NONE);
 	mmcinfo.sd = 1;  /* assuming a SD card */
+
+	mmcinfo.highcap=0;
 
 	while ((retval = mmc_init_card_state(&request)) == MMC_INIT_DOING)
 		;
@@ -1098,18 +1103,20 @@ static inline char * card_state_to_string(int i)
 
 int mmc_unpack_csd(struct mmc_request *request, struct mmc_csd *csd)
 {
+
 	u8 *buf = request->response;
 	int num = 0;
 	
 	if (request->result)
 		return request->result;
-
 	csd->csd_structure      = (buf[1] & 0xc0) >> 6;
-	if (csd->csd_structure)
-		sd2_0 = 1;
-	else
-		sd2_0 = 0;
-	
+	if(mmcinfo.sd){
+		if (csd->csd_structure){
+			mmcinfo.highcap = 1;
+		}else{
+			mmcinfo.highcap = 0;
+		}
+	}
 	switch (csd->csd_structure) {
 	case 0 :
 		csd->taac               = buf[2];
@@ -1290,7 +1297,8 @@ int mmc_unpack_r1(struct mmc_request *request, struct mmc_response_r1 *r1, enum 
 {
 	u8 *buf = request->response;
 
-	if (request->result)        return request->result;
+	if (request->result)     
+		return request->result;
 
 	r1->cmd    = buf[0];
 	r1->status = PARSE_U32(buf,1);
@@ -1316,7 +1324,8 @@ int mmc_unpack_r1(struct mmc_request *request, struct mmc_response_r1 *r1, enum 
 		if (r1->status & R1_CID_CSD_OVERWRITE)  return MMC_ERROR_CID_CSD_OVERWRITE;
 	}
 
-	if (buf[0] != request->cmd) return MMC_ERROR_HEADER_MISMATCH;
+	if (buf[0] != request->cmd) 
+		return MMC_ERROR_HEADER_MISMATCH;
 
 	/* This should be last - it's the least dangerous error */
 
@@ -1326,8 +1335,9 @@ int mmc_unpack_r1(struct mmc_request *request, struct mmc_response_r1 *r1, enum 
 int mmc_unpack_scr(struct mmc_request *request, struct mmc_response_r1 *r1, enum card_state state, u32 *scr)
 {
         u8 *buf = request->response;
-	if (request->result)        return request->result;
-        
+	if (request->result)
+	        return request->result;
+
         *scr = PARSE_U32(buf, 5); /* Save SCR returned by the SD Card */
         return mmc_unpack_r1(request, r1, state);
         
@@ -1337,8 +1347,9 @@ int mmc_unpack_r6(struct mmc_request *request, struct mmc_response_r1 *r1, enum 
 {
 	u8 *buf = request->response;
 
-	if (request->result)        return request->result;
-        
+	if (request->result)
+	        return request->result;
+
         *rca = PARSE_U16(buf,1);  /* Save RCA returned by the SD Card */
         
         *(buf+1) = 0;
@@ -1352,7 +1363,8 @@ int mmc_unpack_cid(struct mmc_request *request, struct mmc_cid *cid)
 	u8 *buf = request->response;
 	int i;
 
-	if (request->result) return request->result;
+	if (request->result)
+		return request->result;
 
 	cid->mid = buf[1];
 	cid->oid = PARSE_U16(buf,2);
@@ -1368,7 +1380,8 @@ int mmc_unpack_cid(struct mmc_request *request, struct mmc_cid *cid)
 	      (cid->prv>>4), (cid->prv&0xf), 
 	      cid->psn, (cid->mdt>>4), (cid->mdt&0xf)+1997);
 
-	if (buf[0] != 0x3f)  return MMC_ERROR_HEADER_MISMATCH;
+	if (buf[0] != 0x3f)
+		return MMC_ERROR_HEADER_MISMATCH;
       	return 0;
 }
 
@@ -1376,12 +1389,15 @@ int mmc_unpack_r3(struct mmc_request *request, struct mmc_response_r3 *r3)
 {
 	u8 *buf = request->response;
 
-	if (request->result) return request->result;
+	if (request->result) 
+		return request->result;
 
 	r3->ocr = PARSE_U32(buf,1);
 	DEBUG(2,"mmc_unpack_r3: ocr=%08x\n", r3->ocr);
 
-	if (buf[0] != 0x3f)  return MMC_ERROR_HEADER_MISMATCH;
+	if (buf[0] != 0x3f)
+		return MMC_ERROR_HEADER_MISMATCH;
+
 	return 0;
 }
 

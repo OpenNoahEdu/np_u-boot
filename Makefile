@@ -21,6 +21,7 @@
 # MA 02111-1307 USA
 #
 
+
 VERSION = 1
 PATCHLEVEL = 1
 SUBLEVEL = 6
@@ -2111,17 +2112,111 @@ tb0229_config: unconfig
 #########################################################################
 ## MIPS32 Jz4XXX
 #########################################################################
-f4760_config		: 	unconfig
+f4810_config		: 	unconfig
 	@ >include/config.h
+	@echo "#define CONFIG_F4810 1" >>include/config.h
+	@./mkconfig -a f4810 mips mips f4810
+
+lepus_nand_config:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_DDR2" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for lepus"
+	@./mkconfig -a lepus mips mips lepus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/lepus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+cygnus_nand_mddr_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for cygnus, using MDDR"
+	@./mkconfig -a cygnus mips mips cygnus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/cygnus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+cygnus_nand_ddr1_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_DDR1" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for cygnus, using DDR1"
+	@./mkconfig -a cygnus mips mips cygnus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/cygnus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+cygnus_nand_ddr2_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_DDR2" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for cygnus, using DDR2"
+	@./mkconfig -a cygnus mips mips cygnus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/cygnus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+cygnus_nand_msdram_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_MOBILE_SDRAM" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for cygnus, using MSDRAM"
+	@./mkconfig -a cygnus mips mips cygnus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/cygnus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = y" >> $(obj)include/config.mk
+
+cygnus_nand_sdram_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for cygnus, using SDRAM"
+	@./mkconfig -a cygnus mips mips cygnus
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/cygnus/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = y" >> $(obj)include/config.mk
+
+f4760_config		: 	unconfig
 	@echo "#define CONFIG_F4760 1" >>include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NOR boot image for f4760"
 	@./mkconfig -a f4760 mips mips f4760
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
 
 f4760_nand_config	:	unconfig
 	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_MOBILE_SDRAM" >> $(obj)include/config.h
 	@echo "Compile NAND boot image for f4760"
 	@./mkconfig -a f4760 mips mips f4760
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4760/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = y" >> $(obj)include/config.mk
 
 f4760_spi_config	:	unconfig
 	@echo "#define CONFIG_SPI_U_BOOT" > $(obj)include/config.h
@@ -2129,6 +2224,7 @@ f4760_spi_config	:	unconfig
 	@./mkconfig -a f4760 mips mips f4760
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/f4760/config.tmp
 	@echo "CONFIG_SPI_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
 
 fuwa_config		: 	unconfig
 	@ >include/config.h
@@ -2176,6 +2272,72 @@ aquila_nand_config	:	unconfig
 	@./mkconfig -a aquila mips mips aquila
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/aquila/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+altair_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for altair, using MDDR"
+	@./mkconfig -a altair mips mips altair
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/altair/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+z800_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for Z800, using MDDR"
+	@./mkconfig -a z800 mips mips z800
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/z800/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+pt701_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for PT701, using MDDR"
+	@./mkconfig -a pt701 mips mips pt701
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/pt701/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+pt702_nand_config:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_DDR2" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for pt702"
+	@./mkconfig -a pt702 mips mips pt702
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/pt702/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
+crux_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "#define CONFIG_SDRAM_MDDR" >> $(obj)include/config.h
+	@echo "Compile NAND boot image for crux, using MDDR"
+	@./mkconfig -a crux mips mips crux
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/crux/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "CONFIG_CPU_TYPE = 4760" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_MDDR = y" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR1 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_DDR2 = n" >> $(obj)include/config.mk
+	@echo "CONFIG_USE_SDRAM = n" >> $(obj)include/config.mk
+
 
 cetus_nand_config	:	unconfig
 	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h

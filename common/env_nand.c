@@ -162,7 +162,7 @@ int saveenv(void)
 	if(gd->env_valid == 1) {
 		puts ("Erasing redundant Nand...");
 		if (nand_erase(&nand_info[0],
-			       CFG_ENV_OFFSET_REDUND, CFG_ENV_SIZE))
+			       CFG_ENV_OFFSET_REDUND, CFG_NAND_BLOCK_SIZE))
 			return 1;
 		puts ("Writing to redundant Nand... ");
 		ret = nand_write(&nand_info[0], CFG_ENV_OFFSET_REDUND, &total,
@@ -170,7 +170,7 @@ int saveenv(void)
 	} else {
 		puts ("Erasing Nand...");
 		if (nand_erase(&nand_info[0],
-			       CFG_ENV_OFFSET, CFG_ENV_SIZE))
+			       CFG_ENV_OFFSET, CFG_NAND_BLOCK_SIZE))
 			return 1;
 
 		puts ("Writing to Nand... ");

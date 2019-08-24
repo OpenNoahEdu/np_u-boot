@@ -156,6 +156,7 @@ static inline u32 jz_readl(u32 address)
 #define DMAC_BASE	0xB3420000
 #define UHC_BASE	0xB3430000
 #define UDC_BASE	0xB3440000
+#define BDMAC_BASE	0xB3450000
 #define GPS_BASE	0xB3480000
 #define ETHC_BASE	0xB34B0000
 #define BCH_BASE	0xB34D0000
@@ -273,6 +274,7 @@ static inline u32 jz_readl(u32 address)
 #define RTC_HWCR	(RTC_BASE + 0x2c) /* Hibernate Wakeup Control Register */
 #define RTC_HWRSR	(RTC_BASE + 0x30) /* Hibernate Wakeup Status Register */
 #define RTC_HSPR	(RTC_BASE + 0x34) /* Hibernate Scratch Pattern Register */
+#define RTC_WENR	(RTC_BASE + 0x3c) /* Write enable pattern register */
 
 #define REG_RTC_RCR	REG32(RTC_RCR)
 #define REG_RTC_RSR	REG32(RTC_RSR)
@@ -284,6 +286,7 @@ static inline u32 jz_readl(u32 address)
 #define REG_RTC_HWCR	REG32(RTC_HWCR)
 #define REG_RTC_HWRSR	REG32(RTC_HWRSR)
 #define REG_RTC_HSPR	REG32(RTC_HSPR)
+#define REG_RTC_WENR	REG32(RTC_WENR)
 
 /* RTC Control Register */
 #define RTC_RCR_WRDY	(1 << 7)  /* Write Ready Flag */
@@ -321,107 +324,230 @@ static inline u32 jz_readl(u32 address)
 #define RTC_HWRSR_PIN		(1 << 1)  /* Wakeup pin status bit */
 #define RTC_HWRSR_ALM		(1 << 0)  /* RTC alarm status bit */
 
+/* Write enable pattern register */
+#define RTC_WENR_WEN		(1 << 31) /* write has been enabled */
+#define RTC_WENR_WENPAT_BIT	0
+#define RTC_WENR_WENPAT_MASK	(0xffff << RTC_WENR_WENPAT_BIT) /* The write enable pattern. */
+
 
 /*************************************************************************
  * CPM (Clock reset and Power control Management)
  *************************************************************************/
-#define CPM_CPCCR	(CPM_BASE+0x00)
-#define CPM_CPPCR	(CPM_BASE+0x10)
-#define CPM_CPPSR	(CPM_BASE+0x14) /* PLL Switch and Status Register */
-#define CPM_I2SCDR	(CPM_BASE+0x60)
-#define CPM_LPCDR	(CPM_BASE+0x64)
-#define CPM_MSCCDR(n)	(CPM_BASE+0x68) /* MSC0(n=0) or MSC1(n=1) device clock divider Register */
-#define CPM_SSICDR	(CPM_BASE+0x74)
-#define CPM_PCMCDR	(CPM_BASE+0x7C) /* PCM device clock divider Register */
+#define CPM_CPCCR		(CPM_BASE+0x00) /* Clock control register		*/
+#define CPM_CPPCR		(CPM_BASE+0x10) /* PLL control register 0		*/
+#define CPM_CPPSR		(CPM_BASE+0x14) /* PLL switch and status Register	*/
+#define CPM_CPPCR1		(CPM_BASE+0x30) /* PLL control register 1		*/
+#define CPM_CPSPR		(CPM_BASE+0x34) /* CPM scratch pad register		*/
+#define CPM_CPSPPR		(CPM_BASE+0x38) /* CPM scratch protected register	*/
+#define CPM_USBPCR		(CPM_BASE+0x3c) /* USB parameter control register	*/
+#define CPM_USBRDT		(CPM_BASE+0x40) /* USB reset detect timer register	*/
+#define CPM_USBVBFIL		(CPM_BASE+0x44) /* USB jitter filter register		*/
+#define CPM_USBCDR		(CPM_BASE+0x50) /* USB OTG PHY clock divider register	*/
+#define CPM_I2SCDR		(CPM_BASE+0x60) /* I2S device clock divider register	*/
+#define CPM_LPCDR		(CPM_BASE+0x64) /* LCD pix clock divider register	*/
+#define CPM_MSCCDR		(CPM_BASE+0x68) /* MSC clock divider register		*/
+#define CPM_UHCCDR		(CPM_BASE+0x6C) /* UHC 48M clock divider register	*/
+#define CPM_SSICDR		(CPM_BASE+0x74) /* SSI clock divider register		*/
+#define CPM_CIMCDR		(CPM_BASE+0x7c) /* CIM MCLK clock divider register	*/
+#define CPM_GPSCDR		(CPM_BASE+0x80) /* GPS clock divider register		*/
+#define CPM_PCMCDR		(CPM_BASE+0x84) /* PCM device clock divider register	*/
+#define CPM_GPUCDR		(CPM_BASE+0x88) /* GPU clock divider register		*/
 
-#define CPM_LCR		(CPM_BASE+0x04)
-#define CPM_CLKGR	(CPM_BASE+0x20)
-#define CPM_OPCR	(CPM_BASE+0x24) /* Oscillator and Power Control Register */
+#define CPM_LCR			(CPM_BASE+0x04)
+#define CPM_PSWCST(n)		(CPM_BASE+0x4*(n)+0x90)
+#define CPM_CLKGR0		(CPM_BASE+0x20) /* Clock Gate Register0 */
+#define CPM_CLKGR1		(CPM_BASE+0x28) /* Clock Gate Register1 */
+#define CPM_OPCR		(CPM_BASE+0x24) /* Oscillator and Power Control Register */
 
-#define CPM_RSR		(CPM_BASE+0x08)
+#define CPM_RSR			(CPM_BASE+0x08)
 
-#define REG_CPM_CPCCR   	REG32(CPM_CPCCR)
-#define REG_CPM_CPPCR    	REG32(CPM_CPPCR)
-#define REG_CPM_CPPSR	        REG32(CPM_CPPSR)
-#define REG_CPM_I2SCDR  	REG32(CPM_I2SCDR)
-#define REG_CPM_LPCDR   	REG32(CPM_LPCDR)
-#define REG_CPM_MSCCDR(n)	REG32(CPM_MSCCDR(n))
-#define REG_CPM_SSICDR  	REG32(CPM_SSICDR)
-#define REG_CPM_PCMCDR          REG32(CPM_PCMCDR)
+
+#define REG_CPM_CPCCR		REG32(CPM_CPCCR)
+#define REG_CPM_CPPCR		REG32(CPM_CPPCR)
+#define REG_CPM_CPPSR		REG32(CPM_CPPSR)
+#define REG_CPM_CPPCR1		REG32(CPM_CPPCR1)
+#define REG_CPM_CPSPR		REG32(CPM_CPSPR)
+#define REG_CPM_CPSPPR		REG32(CPM_CPSPPR)
+#define REG_CPM_USBPCR		REG32(CPM_USBPCR)
+#define REG_CPM_USBRDT		REG32(CPM_USBRDT)
+#define REG_CPM_USBVBFIL	REG32(CPM_USBVBFIL)
+#define REG_CPM_USBCDR		REG32(CPM_USBCDR)
+#define REG_CPM_I2SCDR		REG32(CPM_I2SCDR)
+#define REG_CPM_LPCDR		REG32(CPM_LPCDR)
+#define REG_CPM_MSCCDR		REG32(CPM_MSCCDR)
+#define REG_CPM_UHCCDR		REG32(CPM_UHCCDR)
+#define REG_CPM_SSICDR		REG32(CPM_SSICDR)
+#define REG_CPM_CIMCDR		REG32(CPM_CIMCDR)
+#define REG_CPM_GPSCDR		REG32(CPM_GPSCDR)
+#define REG_CPM_PCMCDR		REG32(CPM_PCMCDR)
+#define REG_CPM_GPUCDR		REG32(CPM_GPUCDR)
 
 #define REG_CPM_LCR	REG32(CPM_LCR)
-#define REG_CPM_CLKGR	REG32(CPM_CLKGR)
+#define REG_CPM_CLKGR0	REG32(CPM_CLKGR0)
+#define REG_CPM_CLKGR1	REG32(CPM_CLKGR1)
 #define REG_CPM_OPCR	REG32(CPM_OPCR)
 
 #define REG_CPM_RSR	REG32(CPM_RSR)
+/* Clock control register */
+#define CPM_CPCCR_ECS			(0x01 << 31)
+#define CPM_CPCCR_MEM			(0x01 << 30)
+#define CPM_CPCCR_SDIV_BIT		24
+#define CPM_CPCCR_SDIV_MASK		(0x0f << CPM_CPCCR_SDIV_BIT)
+#define CPM_CPCCR_CE			(0x01 << 22)
+#define CPM_CPCCR_PCS			(0x01 << 21)
+#define CPM_CPCCR_H2DIV_BIT		16
+#define CPM_CPCCR_H2DIV_MASK		(0x0f << CPM_CPCCR_H2DIV_BIT)
+#define CPM_CPCCR_MDIV_BIT		12
+#define CPM_CPCCR_MDIV_MASK		(0x0f << CPM_CPCCR_MDIV_BIT)
+#define CPM_CPCCR_PDIV_BIT		8
+#define CPM_CPCCR_PDIV_MASK		(0x0f << CPM_CPCCR_PDIV_BIT)
+#define CPM_CPCCR_HDIV_BIT		4
+#define CPM_CPCCR_HDIV_MASK		(0x0f << CPM_CPCCR_HDIV_BIT)
+#define CPM_CPCCR_CDIV_BIT		0
+#define CPM_CPCCR_CDIV_MASK		(0x0f << CPM_CPCCR_CDIV_BIT)
 
-/* Clock Control Register */
-#define CPM_CPCCR_I2CS		(1 << 31)
-#define CPM_CPCCR_ECS   	(1 << 30) /* Select the between EXCLK and EXCLK/2 output */
-#define CPM_CPCCR_UCS		(1 << 29)
-#define CPM_CPCCR_UDIV_BIT	23
-#define CPM_CPCCR_UDIV_MASK	(0x3f << CPM_CPCCR_UDIV_BIT)
-#define CPM_CPCCR_CE		(1 << 22)
-#define CPM_CPCCR_PCS		(1 << 21)
-#define CPM_CPCCR_H1DIV_BIT	16
-#define CPM_CPCCR_H1DIV_MASK	(0x1f << CPM_CPCCR_H1DIV_BIT)
-#define CPM_CPCCR_MDIV_BIT	12
-#define CPM_CPCCR_MDIV_MASK	(0x0f << CPM_CPCCR_MDIV_BIT)
-#define CPM_CPCCR_PDIV_BIT	8
-#define CPM_CPCCR_PDIV_MASK	(0x0f << CPM_CPCCR_PDIV_BIT)
-#define CPM_CPCCR_HDIV_BIT	4
-#define CPM_CPCCR_HDIV_MASK	(0x0f << CPM_CPCCR_HDIV_BIT)
-#define CPM_CPCCR_CDIV_BIT	0
-#define CPM_CPCCR_CDIV_MASK	(0x0f << CPM_CPCCR_CDIV_BIT)
+/* PLL control register 0 */
+#define CPM_CPPCR_PLLM_BIT		24
+#define CPM_CPPCR_PLLM_MASK		(0x7f << CPM_CPPCR_PLLM_BIT)
+#define CPM_CPPCR_PLLN_BIT		18
+#define CPM_CPPCR_PLLN_MASK		(0x0f << CPM_CPPCR_PLLN_BIT)
+#define CPM_CPPCR_PLLOD_BIT		16
+#define CPM_CPPCR_PLLOD_MASK		(0x03 << CPM_CPPCR_PLLOD_BIT)
+#define CPM_CPPCR_LOCK0			(1 << 15)
+#define CPM_CPPCR_ENLOCK		(1 << 14)
+#define CPM_CPPCR_PLLS			(1 << 10)
+#define CPM_CPPCR_PLLBP			(1 << 9)
+#define CPM_CPPCR_PLLEN			(1 << 8)
+#define CPM_CPPCR_PLLST_BIT		0
+#define CPM_CPPCR_PLLST_MASK		(0xff << CPM_CPPCR_PLLST_BIT)
 
-/* PLL Switch and Status Register */
-#define CPM_CPPSR_PLLOFF        31
-#define CPM_CPPSR_PLLBP         30
-#define CPM_CPPSR_PLLON         29
-#define CPM_CPPSR_PS            28 /* Indicate whether the PLL parameters' change has finished */
-#define CPM_CPPSR_FS            27 /* Indicate whether the main clock's change has finished */
-#define CPM_CPPSR_CS            26 /* Indicate whether the clock switch has finished */
-#define CPM_CPPSR_PM            1  /* Clock switch mode */
-#define CPM_CPPSR_FM            0  /* Clock frequency change mode */
+/* PLL control register 1 */
+#define CPM_CPPCR1_PLL1M_BIT		24
+#define CPM_CPPCR1_PLL1M_MASK		(0x7f << CPM_CPPCR1_PLL1M_BIT)
+#define CPM_CPPCR1_PLL1N_BIT		18
+#define CPM_CPPCR1_PLL1N_MASK		(0x0f << CPM_CPPCR1_PLL1N_BIT)
+#define CPM_CPPCR1_PLL1OD_BIT		16
+#define CPM_CPPCR1_PLL1OD_MASK		(0x03 << CPM_CPPCR1_PLL1OD_BIT)
+#define CPM_CPPCR1_P1SCS		(1 << 15)
+#define CPM_CPPCR1_P1SDIV_BIT		9
+#define CPM_CPPCR1_P1SDIV_MASK		(0x3f << CPM_CPPCR1_P1SDIV_BIT)
+#define CPM_CPPCR1_PLL1EN		(1 << 7)
+#define CPM_CPPCR1_PLL1S		(1 << 6)
+#define CPM_CPPCR1_LOCK1		(1 << 2)
+#define CPM_CPPCR1_PLL1OFF		(1 << 1)
+#define CPM_CPPCR1_PLL1ON		(1 << 0)
 
-/* I2S Clock Divider Register */
-#define CPM_I2SCDR_I2SDIV_BIT	0
-#define CPM_I2SCDR_I2SDIV_MASK	(0x1ff << CPM_I2SCDR_I2SDIV_BIT)
+/* PLL switch and status Register */
+#define CPM_CPPSR_PLLOFF		(1 << 31)
+#define CPM_CPPSR_PLLBP			(1 << 30)
+#define CPM_CPPSR_PLLON			(1 << 29)
+#define CPM_CPPSR_PS			(1 << 28)
+#define CPM_CPPSR_FS			(1 << 27)
+#define CPM_CPPSR_CS			(1 << 26)
+#define CPM_CPPSR_SM			(1 << 2)
+#define CPM_CPPSR_PM			(1 << 1)
+#define CPM_CPPSR_FM			(1 << 0)
 
-/* LCD Pixel Clock Divider Register */
-#define CPM_LPCDR_LSCS	        31 /* TV encoder Source Pixel Clock Selection */
-#define CPM_LPCDR_LPCS	        30 /* LCD Panel pix clock Selection */
-#define CPM_LPCDR_LTCS	        29 /* LCD TV Encoder or Panel pix clock Selection */
-#define CPM_LPCDR_PIXDIV_BIT	0
-#define CPM_LPCDR_PIXDIV_MASK	(0x7ff << CPM_LPCDR_PIXDIV_BIT)
+/* CPM scratch protected register */
+#define CPM_CPSPPR_BIT			0
+#define CPM_CPSPPR_MASK			(0xffff << CPM_CPSPPR_BIT)
 
-/* MSC Clock Divider Register */
-#define CPM_MSCCDR_MSCDIV_BIT	0
-#define CPM_MSCCDR_MSCDIV_MASK	(0x1f << CPM_MSCCDR_MSCDIV_BIT)
+/* USB parameter control register */
+#define CPM_USBPCR_USB_MODE		(1 << 31)  /* 1: OTG, 0: UDC*/
+#define CPM_USBPCR_AVLD_REG		(1 << 30)  
+#define CPM_USBPCR_IDPULLUP_MASK_BIT	28  
+#define CPM_USBPCR_IDPULLUP_MASK_MASK	(0x02 << IDPULLUP_MASK_BIT)
+#define CPM_USBPCR_INCR_MASK		(1 << 27)
+#define CPM_USBPCR_CLK12_EN		(1 << 26)  
+#define CPM_USBPCR_COMMONONN		(1 << 25)  
+#define CPM_USBPCR_VBUSVLDEXT		(1 << 24)  
+#define CPM_USBPCR_VBUSVLDEXTSEL	(1 << 23)  
+#define CPM_USBPCR_POR			(1 << 22)  
+#define CPM_USBPCR_SIDDQ		(1 << 21)  
+#define CPM_USBPCR_OTG_DISABLE		(1 << 20)  
+#define CPM_USBPCR_COMPDISTUNE_BIT	17  
+#define CPM_USBPCR_COMPDISTUNE_MASK	(0x07 << COMPDISTUNE_BIT)
+#define CPM_USBPCR_OTGTUNE_BIT		14  
+#define CPM_USBPCR_OTGTUNE_MASK		(0x07 << OTGTUNE_BIT)
+#define CPM_USBPCR_SQRXTUNE_BIT		11  
+#define CPM_USBPCR_SQRXTUNE_MASK	(0x7x << SQRXTUNE_BIT)
+#define CPM_USBPCR_TXFSLSTUNE_BIT	7  
+#define CPM_USBPCR_TXFSLSTUNE_MASK	(0x0f << TXFSLSTUNE_BIT)
+#define CPM_USBPCR_TXPREEMPHTUNE	(1 << 6)  
+#define CPM_USBPCR_TXRISETUNE_BIT	4  
+#define CPM_USBPCR_TXRISETUNE_MASK	(0x03 << TXRISETUNE_BIT)
+#define CPM_USBPCR_TXVREFTUNE_BIT	0  
+#define CPM_USBPCR_TXVREFTUNE_MASK	(0x0f << TXVREFTUNE_BIT)
 
-/* SSI Clock Divider Register */
-#define CPM_SSICDR_SSIDIV_BIT	0
-#define CPM_SSICDR_SSIDIV_MASK	(0xf << CPM_SSICDR_SSIDIV_BIT)
+/* USB reset detect timer register */
+#define CPM_USBRDT_VBFIL_LD_EN		(1 << 25)  
+#define CPM_USBRDT_IDDIG_EN		(1 << 24)  
+#define CPM_USBRDT_IDDIG_REG		(1 << 23)  
+#define CPM_USBRDT_USBRDT_BIT		0  
+#define CPM_USBRDT_USBRDT_MASK		(0x7fffff << CPM_USBRDT_USBRDT_BIT)
 
-/* PCM device clock divider Register */
-#define CPM_PCMCDR_PCMS         31 /* PCM source clock Selection */
-#define CPM_PCMCDR_PCMCD_BIT    0
-#define CPM_PCMCDR_PCMCD_MASK   (0x1ff << CPM_PCMCDR_PCMCD_BIT)
+/* USB OTG PHY clock divider register */
+#define CPM_USBCDR_UCS			(1 << 31)
+#define CPM_USBCDR_UPCS			(1 << 30)
+#define CPM_USBCDR_OTGDIV_BIT		0
+#define CPM_USBCDR_OTGDIV_MASK		(0x3f << CPM_USBCDR_OTGDIV_BIT)
 
-/* PLL Control Register */
-#define CPM_CPPCR_PLLM_BIT	23
-#define CPM_CPPCR_PLLM_MASK	(0x1ff << CPM_CPPCR_PLLM_BIT)
-#define CPM_CPPCR_PLLN_BIT	18
-#define CPM_CPPCR_PLLN_MASK	(0x1f << CPM_CPPCR_PLLN_BIT)
-#define CPM_CPPCR_PLLOD_BIT	16
-#define CPM_CPPCR_PLLOD_MASK	(0x03 << CPM_CPPCR_PLLOD_BIT)
-#define CPM_CPPCR_PLLS		(1 << 10) /* obsolete, replaced by CPM_CPPSR_PLLON */
-#define CPM_CPPCR_PLLBP		(1 << 9)
-#define CPM_CPPCR_PLLEN		(1 << 8)
-#define CPM_CPPCR_PLLST_BIT	0
-#define CPM_CPPCR_PLLST_MASK	(0xff << CPM_CPPCR_PLLST_BIT)
+/* I2S device clock divider register */
+#define CPM_I2SCDR_I2CS			(1 << 31)
+#define CPM_I2SCDR_I2PCS		(1 << 30)
+#define CPM_I2SCDR_I2SDIV_BIT		0
+#define CPM_I2SCDR_I2SDIV_MASK		(0x1ff << CPM_I2SCDR_I2SDIV_BIT)
+
+/* LCD pix clock divider register */
+#define CPM_LPCDR_LSCS			(1 << 31)
+#define CPM_LPCDR_LTCS			(1 << 30)
+#define CPM_LPCDR_LPCS			(1 << 29)
+#define CPM_LPCDR_PIXDIV_BIT		0
+#define CPM_LPCDR_PIXDIV_MASK		(0x7ff << CPM_LPCDR_PIXDIV_BIT)
+
+/* MSC clock divider register */
+#define CPM_MSCCDR_MCS			(1 << 31)
+#define CPM_MSCCDR_MSCDIV_BIT		0
+#define CPM_MSCCDR_MSCDIV_MASK		(0x3f << CPM_MSCCDR_PIXDIV_BIT)
+
+/* UHC 48M clock divider register */
+#define CPM_UHCCDR_UHPCS		(1 << 31)
+#define CPM_UHCCDR_UHCDIV_BIT		0
+#define CPM_UHCCDR_UHCDIV_MASK		(0xf << CPM_UHCCDR_UHCDIV_BIT)
+
+/* SSI clock divider register */
+#define CPM_SSICDR_SCS			(1 << 31)
+#define CPM_SSICDR_SSIDIV_BIT		0
+#define CPM_SSICDR_SSIDIV_MASK		(0x3f << CPM_SSICDR_SSIDIV_BIT)
+
+/* CIM MCLK clock divider register */
+#define CPM_CIMCDR_CIMDIV_BIT		0
+#define CPM_CIMCDR_CIMDIV_MASK		(0xff << CPM_CIMCDR_CIMDIV_BIT)
+
+/* GPS clock divider register */
+#define CPM_GPSCDR_GPCS			(1 << 31)
+#define CPM_GPSCDR_GPSDIV_BIT		0
+#define CPM_GSPCDR_GPSDIV_MASK		(0xf << CPM_GPSCDR_GPSDIV_BIT)
+
+/* PCM device clock divider register */
+#define CPM_PCMCDR_PCMS			(1 << 31)
+#define CPM_PCMCDR_PCMPCS		(1 << 30)
+#define CPM_PCMCDR_PCMDIV_BIT		0
+#define CPM_PCMCDR_PCMDIV_MASK		(0x1ff << CPM_PCMCDR_PCMDIV_BIT)
+
+/* GPU clock divider register */
+#define CPM_GPUCDR_GPCS			(1 << 31)
+#define CPM_GPUCDR_GPUDIV_BIT		0
+#define CPM_GPUCDR_GPUDIV_MASK		(0x7 << CPM_GPUCDR_GPUDIV_BIT)
 
 /* Low Power Control Register */
+#define CPM_LCR_PD_AHB1		(1 << 30)
+#define CPM_LCR_VBAT_IR		(1 << 29)
+#define CPM_LCR_PD_GPS		(1 << 28)
+#define CPM_LCR_PD_AHB1S	(1 << 26)
+#define CPM_LCR_PD_GPSS		(1 << 24)
+#define CPM_LCR_PST_BIT 	8
+#define CPM_LCR_PST_MASK 	(0xfff << CPM_LCR_PST_BIT)
 #define CPM_LCR_DOZE_DUTY_BIT 	3
 #define CPM_LCR_DOZE_DUTY_MASK 	(0x1f << CPM_LCR_DOZE_DUTY_BIT)
 #define CPM_LCR_DOZE_ON		(1 << 2)
@@ -430,44 +556,65 @@ static inline u32 jz_readl(u32 address)
   #define CPM_LCR_LPM_IDLE	(0x0 << CPM_LCR_LPM_BIT)
   #define CPM_LCR_LPM_SLEEP	(0x1 << CPM_LCR_LPM_BIT)
 
-/* Clock Gate Register */
-#define CPM_CLKGR_AUX_CPU	(1 << 24)
-#define CPM_CLKGR_AHB1  	(1 << 23)
-#define CPM_CLKGR_IDCT  	(1 << 22)
-#define CPM_CLKGR_DB    	(1 << 21)
-#define CPM_CLKGR_ME    	(1 << 20)
-#define CPM_CLKGR_MC    	(1 << 19)
-#define CPM_CLKGR_TVE    	(1 << 18)
-#define CPM_CLKGR_TSSI    	(1 << 17)
-#define CPM_CLKGR_MSC1    	(1 << 16)
-#define CPM_CLKGR_UART2    	(1 << 15)
-#define CPM_CLKGR_UART1		(1 << 14)
-#define CPM_CLKGR_IPU		(1 << 13)
-#define CPM_CLKGR_DMAC		(1 << 12)
-#define CPM_CLKGR_BCH		(1 << 11)
-#define CPM_CLKGR_UDC		(1 << 10)
-#define CPM_CLKGR_LCD		(1 << 9)
-#define CPM_CLKGR_CIM		(1 << 8)
-#define CPM_CLKGR_SADC		(1 << 7)
-#define CPM_CLKGR_MSC0		(1 << 6)
-#define CPM_CLKGR_AIC		(1 << 5)
-#define CPM_CLKGR_SSI		(1 << 4)
-#define CPM_CLKGR_I2C		(1 << 3)
-#define CPM_CLKGR_RTC		(1 << 2)
-#define CPM_CLKGR_TCU		(1 << 1)
-#define CPM_CLKGR_UART0		(1 << 0)
+/* Clock Gate Register0 */
+#define CPM_CLKGR0_EMC		(1 << 31)
+#define CPM_CLKGR0_DDR  	(1 << 30)
+#define CPM_CLKGR0_IPU    	(1 << 29)
+#define CPM_CLKGR0_LCD		(1 << 28)
+#define CPM_CLKGR0_TVE  	(1 << 27)
+#define CPM_CLKGR0_CIM    	(1 << 26)
+#define CPM_CLKGR0_MDMA    	(1 << 25)
+#define CPM_CLKGR0_UHC    	(1 << 24)
+#define CPM_CLKGR0_MAC    	(1 << 23)
+#define CPM_CLKGR0_GPS    	(1 << 22)
+#define CPM_CLKGR0_DMAC    	(1 << 21)
+#define CPM_CLKGR0_SSI2    	(1 << 20)
+#define CPM_CLKGR0_SSI1    	(1 << 19)
+#define CPM_CLKGR0_UART3    	(1 << 18)
+#define CPM_CLKGR0_UART2    	(1 << 17)
+#define CPM_CLKGR0_UART1    	(1 << 16)
+#define CPM_CLKGR0_UART0	(1 << 15)
+#define CPM_CLKGR0_SADC		(1 << 14)
+#define CPM_CLKGR0_KBC		(1 << 13)
+#define CPM_CLKGR0_MSC2		(1 << 12)
+#define CPM_CLKGR0_MSC1		(1 << 11)
+#define CPM_CLKGR0_OWI		(1 << 10)
+#define CPM_CLKGR0_TSSI		(1 << 9)
+#define CPM_CLKGR0_AIC		(1 << 8)
+#define CPM_CLKGR0_SCC		(1 << 7)
+#define CPM_CLKGR0_I2C1		(1 << 6)
+#define CPM_CLKGR0_I2C0		(1 << 5)
+#define CPM_CLKGR0_SSI0		(1 << 4)
+#define CPM_CLKGR0_MSC0		(1 << 3)
+#define CPM_CLKGR0_OTG		(1 << 2)
+#define CPM_CLKGR0_BCH		(1 << 1)
+#define CPM_CLKGR0_NEMC		(1 << 0)
+
+/* Clock Gate Register1 */
+#define CPM_CLKGR1_GPU		(1 << 9)
+#define CPM_CLKGR1_PCM		(1 << 8)
+#define CPM_CLKGR1_AHB1		(1 << 7)
+#define CPM_CLKGR1_CABAC	(1 << 6)
+#define CPM_CLKGR1_SRAM		(1 << 5)
+#define CPM_CLKGR1_DCT		(1 << 4)
+#define CPM_CLKGR1_ME		(1 << 3)
+#define CPM_CLKGR1_DBLK		(1 << 2)
+#define CPM_CLKGR1_MC		(1 << 1)
+#define CPM_CLKGR1_BDMA		(1 << 0)
 
 /* Oscillator and Power Control Register */
 #define CPM_OPCR_O1ST_BIT	8
-#define CPM_OPCR_O1ST_MASK	(0xff << CPM_SCR_O1ST_BIT)
-#define CPM_OPCR_UDCPHY_ENABLE	(1 << 6)
-#define CPM_OPCR_OSC_ENABLE	(1 << 4)
-#define CPM_OPCR_ERCS           (1 << 2) /* EXCLK/512 clock and RTCLK clock selection */
-#define CPM_OPCR_MOSE           (1 << 1) /* Main Oscillator Enable */
-#define CPM_OPCR_MCS            (1 << 0) /* Main clock source select register */
+#define CPM_OPCR_O1ST_MASK	(0xff << CPM_OPCR_O1ST_BIT)
+#define CPM_OPCR_SPENDN		(1 << 7)
+#define CPM_OPCR_GPSEN		(1 << 6)
+#define CPM_OPCR_SPENDH		(1 << 5)
+#define CPM_OPCR_O1SE		(1 << 4) /* */
+#define CPM_OPCR_ERCS           (1 << 2) /* 0: select EXCLK/512 clock, 1: RTCLK clock */
+#define CPM_OPCR_USBM           (1 << 0) /* 0: select EXCLK/512 clock, 1: RTCLK clock */
+
 
 /* Reset Status Register */
-#define CPM_RSR_HR		(1 << 2)
+#define CPM_RSR_P0R		(1 << 2)
 #define CPM_RSR_WR		(1 << 1)
 #define CPM_RSR_PR		(1 << 0)
 
@@ -511,13 +658,21 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TDHR5	(TCU_BASE + 0x94)
 #define TCU_TCNT5	(TCU_BASE + 0x98)
 #define TCU_TCSR5	(TCU_BASE + 0x9C)
+#define TCU_TDFR6	(TCU_BASE + 0xA0)
+#define TCU_TDHR6	(TCU_BASE + 0xA4)
+#define TCU_TCNT6	(TCU_BASE + 0xA8)
+#define TCU_TCSR6	(TCU_BASE + 0xAC)
+#define TCU_TDFR7	(TCU_BASE + 0xB0)
+#define TCU_TDHR7	(TCU_BASE + 0xB4)
+#define TCU_TCNT7	(TCU_BASE + 0xB8)
+#define TCU_TCSR7	(TCU_BASE + 0xBC)
 
 #define REG_TCU_TSR	REG32(TCU_TSR)
 #define REG_TCU_TSSR	REG32(TCU_TSSR)
 #define REG_TCU_TSCR	REG32(TCU_TSCR)
-#define REG_TCU_TER	REG8(TCU_TER)
-#define REG_TCU_TESR	REG8(TCU_TESR)
-#define REG_TCU_TECR	REG8(TCU_TECR)
+#define REG_TCU_TER	REG16(TCU_TER)
+#define REG_TCU_TESR	REG16(TCU_TESR)
+#define REG_TCU_TECR	REG16(TCU_TECR)
 #define REG_TCU_TFR	REG32(TCU_TFR)
 #define REG_TCU_TFSR	REG32(TCU_TFSR)
 #define REG_TCU_TFCR	REG32(TCU_TFCR)
@@ -544,8 +699,20 @@ static inline u32 jz_readl(u32 address)
 #define REG_TCU_TDHR4	REG16(TCU_TDHR4)
 #define REG_TCU_TCNT4	REG16(TCU_TCNT4)
 #define REG_TCU_TCSR4	REG16(TCU_TCSR4)
+#define REG_TCU_TDFR5	REG16(TCU_TDFR5)
+#define REG_TCU_TDHR5	REG16(TCU_TDHR5)
+#define REG_TCU_TCNT5	REG16(TCU_TCNT5)
+#define REG_TCU_TCSR5	REG16(TCU_TCSR5)
+#define REG_TCU_TDFR6	REG16(TCU_TDFR6)
+#define REG_TCU_TDHR6	REG16(TCU_TDHR6)
+#define REG_TCU_TCNT6	REG16(TCU_TCNT6)
+#define REG_TCU_TCSR6	REG16(TCU_TCSR6)
+#define REG_TCU_TDFR7	REG16(TCU_TDFR7)
+#define REG_TCU_TDHR7	REG16(TCU_TDHR7)
+#define REG_TCU_TCNT7	REG16(TCU_TCNT7)
+#define REG_TCU_TCSR7	REG16(TCU_TCSR7)
 
-// n = 0,1,2,3,4,5
+// n = 0,1,2,3,4,5,6,7
 #define TCU_TDFR(n)	(TCU_BASE + (0x40 + (n)*0x10)) /* Timer Data Full Reg */
 #define TCU_TDHR(n)	(TCU_BASE + (0x44 + (n)*0x10)) /* Timer Data Half Reg */
 #define TCU_TCNT(n)	(TCU_BASE + (0x48 + (n)*0x10)) /* Timer Counter Reg */
@@ -557,6 +724,21 @@ static inline u32 jz_readl(u32 address)
 #define REG_TCU_TCSR(n)	REG16(TCU_TCSR((n)))
 
 // Register definitions
+#define TCU_TSTR_REAL2		(1 << 18)
+#define TCU_TSTR_REAL1		(1 << 17)
+#define TCU_TSTR_BUSY2		(1 << 2)
+#define TCU_TSTR_BUSY1		(1 << 1)
+
+#define TCU_TSTSR_REAL2		(1 << 18)
+#define TCU_TSTSR_REAL1		(1 << 17)
+#define TCU_TSTSR_BUSY2		(1 << 2)
+#define TCU_TSTSR_BUSY1		(1 << 1)
+
+#define TCU_TSTCR_REAL2		(1 << 18)
+#define TCU_TSTCR_REAL1		(1 << 17)
+#define TCU_TSTCR_BUSY2		(1 << 2)
+#define TCU_TSTCR_BUSY1		(1 << 1)
+
 #define TCU_TCSR_PWM_SD		(1 << 9)
 #define TCU_TCSR_PWM_INITL_HIGH	(1 << 8)
 #define TCU_TCSR_PWM_EN		(1 << 7)
@@ -572,6 +754,9 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TCSR_RTC_EN		(1 << 1)
 #define TCU_TCSR_PCK_EN		(1 << 0)
 
+#define TCU_TER_OSTEN		(1 << 15)
+#define TCU_TER_TCEN7		(1 << 7)
+#define TCU_TER_TCEN6		(1 << 6)
 #define TCU_TER_TCEN5		(1 << 5)
 #define TCU_TER_TCEN4		(1 << 4)
 #define TCU_TER_TCEN3		(1 << 3)
@@ -579,6 +764,9 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TER_TCEN1		(1 << 1)
 #define TCU_TER_TCEN0		(1 << 0)
 
+#define TCU_TESR_OSTEN		(1 << 15)
+#define TCU_TESR_TCEN7		(1 << 7)
+#define TCU_TESR_TCEN6		(1 << 6)
 #define TCU_TESR_TCST5		(1 << 5)
 #define TCU_TESR_TCST4		(1 << 4)
 #define TCU_TESR_TCST3		(1 << 3)
@@ -586,6 +774,9 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TESR_TCST1		(1 << 1)
 #define TCU_TESR_TCST0		(1 << 0)
 
+#define TCU_TECR_OSTEN		(1 << 15)
+#define TCU_TECR_TCEN7		(1 << 7)
+#define TCU_TECR_TCEN6		(1 << 6)
 #define TCU_TECR_TCCL5		(1 << 5)
 #define TCU_TECR_TCCL4		(1 << 4)
 #define TCU_TECR_TCCL3		(1 << 3)
@@ -593,12 +784,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TECR_TCCL1		(1 << 1)
 #define TCU_TECR_TCCL0		(1 << 0)
 
+#define TCU_TFR_HFLAG7		(1 << 23)
+#define TCU_TFR_HFLAG6		(1 << 22)
 #define TCU_TFR_HFLAG5		(1 << 21)
 #define TCU_TFR_HFLAG4		(1 << 20)
 #define TCU_TFR_HFLAG3		(1 << 19)
 #define TCU_TFR_HFLAG2		(1 << 18)
 #define TCU_TFR_HFLAG1		(1 << 17)
 #define TCU_TFR_HFLAG0		(1 << 16)
+#define TCU_TFR_FLAGOST		(1 << 15)
+#define TCU_TFR_FFLAG7		(1 << 7)
+#define TCU_TFR_FFLAG6		(1 << 6)
 #define TCU_TFR_FFLAG5		(1 << 5)
 #define TCU_TFR_FFLAG4		(1 << 4)
 #define TCU_TFR_FFLAG3		(1 << 3)
@@ -606,12 +802,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TFR_FFLAG1		(1 << 1)
 #define TCU_TFR_FFLAG0		(1 << 0)
 
+#define TCU_TFSR_HFLAG7		(1 << 23)
+#define TCU_TFSR_HFLAG6		(1 << 22)
 #define TCU_TFSR_HFLAG5		(1 << 21)
 #define TCU_TFSR_HFLAG4		(1 << 20)
 #define TCU_TFSR_HFLAG3		(1 << 19)
 #define TCU_TFSR_HFLAG2		(1 << 18)
 #define TCU_TFSR_HFLAG1		(1 << 17)
 #define TCU_TFSR_HFLAG0		(1 << 16)
+#define TCU_TFSR_FLAGOST	(1 << 15)
+#define TCU_TFSR_FFLAG7		(1 << 7)
+#define TCU_TFSR_FFLAG6		(1 << 6)
 #define TCU_TFSR_FFLAG5		(1 << 5)
 #define TCU_TFSR_FFLAG4		(1 << 4)
 #define TCU_TFSR_FFLAG3		(1 << 3)
@@ -619,12 +820,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TFSR_FFLAG1		(1 << 1)
 #define TCU_TFSR_FFLAG0		(1 << 0)
 
+#define TCU_TFCR_HFLAG7		(1 << 23)
+#define TCU_TFCR_HFLAG6		(1 << 22)
 #define TCU_TFCR_HFLAG5		(1 << 21)
 #define TCU_TFCR_HFLAG4		(1 << 20)
 #define TCU_TFCR_HFLAG3		(1 << 19)
 #define TCU_TFCR_HFLAG2		(1 << 18)
 #define TCU_TFCR_HFLAG1		(1 << 17)
 #define TCU_TFCR_HFLAG0		(1 << 16)
+#define TCU_TFCR_FLAGOST	(1 << 15)
+#define TCU_TFCR_FFLAG7		(1 << 7)
+#define TCU_TFCR_FFLAG6		(1 << 6)
 #define TCU_TFCR_FFLAG5		(1 << 5)
 #define TCU_TFCR_FFLAG4		(1 << 4)
 #define TCU_TFCR_FFLAG3		(1 << 3)
@@ -632,12 +838,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TFCR_FFLAG1		(1 << 1)
 #define TCU_TFCR_FFLAG0		(1 << 0)
 
+#define TCU_TMR_HMASK7		(1 << 23)
+#define TCU_TMR_HMASK6		(1 << 22)
 #define TCU_TMR_HMASK5		(1 << 21)
 #define TCU_TMR_HMASK4		(1 << 20)
 #define TCU_TMR_HMASK3		(1 << 19)
 #define TCU_TMR_HMASK2		(1 << 18)
 #define TCU_TMR_HMASK1		(1 << 17)
 #define TCU_TMR_HMASK0		(1 << 16)
+#define TCU_TMR_MASKOST	        (1 << 15)
+#define TCU_TMR_FMASK7		(1 << 7)
+#define TCU_TMR_FMASK6		(1 << 6)
 #define TCU_TMR_FMASK5		(1 << 5)
 #define TCU_TMR_FMASK4		(1 << 4)
 #define TCU_TMR_FMASK3		(1 << 3)
@@ -645,12 +856,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TMR_FMASK1		(1 << 1)
 #define TCU_TMR_FMASK0		(1 << 0)
 
+#define TCU_TMSR_HMST7		(1 << 23)
+#define TCU_TMSR_HMST6		(1 << 22)
 #define TCU_TMSR_HMST5		(1 << 21)
 #define TCU_TMSR_HMST4		(1 << 20)
 #define TCU_TMSR_HMST3		(1 << 19)
 #define TCU_TMSR_HMST2		(1 << 18)
 #define TCU_TMSR_HMST1		(1 << 17)
 #define TCU_TMSR_HMST0		(1 << 16)
+#define TCU_TMSR_MSTOST	        (1 << 15)
+#define TCU_TMSR_FMST7		(1 << 7)
+#define TCU_TMSR_FMST6		(1 << 6)
 #define TCU_TMSR_FMST5		(1 << 5)
 #define TCU_TMSR_FMST4		(1 << 4)
 #define TCU_TMSR_FMST3		(1 << 3)
@@ -658,12 +874,17 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TMSR_FMST1		(1 << 1)
 #define TCU_TMSR_FMST0		(1 << 0)
 
+#define TCU_TMCR_HMCL7		(1 << 23)
+#define TCU_TMCR_HMCL6		(1 << 22)
 #define TCU_TMCR_HMCL5		(1 << 21)
 #define TCU_TMCR_HMCL4		(1 << 20)
 #define TCU_TMCR_HMCL3		(1 << 19)
 #define TCU_TMCR_HMCL2		(1 << 18)
 #define TCU_TMCR_HMCL1		(1 << 17)
 #define TCU_TMCR_HMCL0		(1 << 16)
+#define TCU_TMCR_MCLOST	        (1 << 15)
+#define TCU_TMCR_FMCL7		(1 << 7)
+#define TCU_TMCR_FMCL6		(1 << 6)
 #define TCU_TMCR_FMCL5		(1 << 5)
 #define TCU_TMCR_FMCL4		(1 << 4)
 #define TCU_TMCR_FMCL3		(1 << 3)
@@ -672,6 +893,9 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TMCR_FMCL0		(1 << 0)
 
 #define TCU_TSR_WDTS		(1 << 16)
+#define TCU_TSR_OST		(1 << 15)
+#define TCU_TSR_STOP7		(1 << 7)
+#define TCU_TSR_STOP6		(1 << 6)
 #define TCU_TSR_STOP5		(1 << 5)
 #define TCU_TSR_STOP4		(1 << 4)
 #define TCU_TSR_STOP3		(1 << 3)
@@ -679,7 +903,10 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TSR_STOP1		(1 << 1)
 #define TCU_TSR_STOP0		(1 << 0)
 
-#define TCU_TSSR_WDTSS		(1 << 16)
+#define TCU_TSSR_WDTSC		(1 << 16)
+#define TCU_TSSR_OST		(1 << 15)
+#define TCU_TSSR_STPS7		(1 << 7)
+#define TCU_TSSR_STPS6		(1 << 6)
 #define TCU_TSSR_STPS5		(1 << 5)
 #define TCU_TSSR_STPS4		(1 << 4)
 #define TCU_TSSR_STPS3		(1 << 3)
@@ -687,13 +914,16 @@ static inline u32 jz_readl(u32 address)
 #define TCU_TSSR_STPS1		(1 << 1)
 #define TCU_TSSR_STPS0		(1 << 0)
 
-#define TCU_TSSR_WDTSC		(1 << 16)
-#define TCU_TSSR_STPC5		(1 << 5)
-#define TCU_TSSR_STPC4		(1 << 4)
-#define TCU_TSSR_STPC3		(1 << 3)
-#define TCU_TSSR_STPC2		(1 << 2)
-#define TCU_TSSR_STPC1		(1 << 1)
-#define TCU_TSSR_STPC0		(1 << 0)
+#define TCU_TSCR_WDTSC		(1 << 16)
+#define TCU_TSCR_OST		(1 << 15)
+#define TCU_TSCR_STPS7		(1 << 7)
+#define TCU_TSCR_STPS6		(1 << 6)
+#define TCU_TSCR_STPS5		(1 << 5)
+#define TCU_TSCR_STPS4		(1 << 4)
+#define TCU_TSCR_STPS3		(1 << 3)
+#define TCU_TSCR_STPS2		(1 << 2)
+#define TCU_TSCR_STPS1		(1 << 1)
+#define TCU_TSCR_STPS0		(1 << 0)
 
 
 /*************************************************************************
@@ -723,6 +953,31 @@ static inline u32 jz_readl(u32 address)
 #define WDT_TCSR_PCK_EN		(1 << 0)
 
 #define WDT_TCER_TCEN		(1 << 0)
+
+/*************************************************************************
+ * OST (Operation System Timer)
+ *************************************************************************/
+#define OST_DR		(OST_BASE + 0xE0)
+#define OST_CNT	        (OST_BASE + 0xE8)
+#define OST_CSR	        (OST_BASE + 0xEC)
+
+#define REG_OST_DR	REG32(OST_DR)
+#define REG_OST_CNT	REG32(OST_CNT)
+#define REG_OST_CSR	REG16(OST_CSR)
+
+#define OST_CSR_CNT_MD		(1 << 15)
+#define OST_CSR_PWM_SD		(1 << 9)
+#define OST_CSR_PRESCALE_BIT	3
+#define OST_CSR_PRESCALE_MASK	(0x7 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE1	(0x0 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE4	(0x1 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE16	(0x2 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE64	(0x3 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE256	(0x4 << OST_CSR_PRESCALE_BIT)
+  #define OST_CSR_PRESCALE1024	(0x5 << OST_CSR_PRESCALE_BIT)
+#define OST_CSR_EXT_EN		(1 << 2)
+#define OST_CSR_RTC_EN		(1 << 1)
+#define OST_CSR_PCK_EN		(1 << 0)
 
 /*************************************************************************
  * MDMAC (MEM Copy DMA Controller)
@@ -762,6 +1017,266 @@ static inline u32 jz_readl(u32 address)
 #define REG_MDMAC_DMACKE     	REG32(MDMAC_DMACKE)
 
 
+/***************************************************************************
+ * BCH & NAND DMAC
+ ***************************************************************************/
+/* n is the DMA channel index (0 - 2) */
+#define BDMAC_DSAR(n)		(BDMAC_BASE + (0x00 + (n) * 0x20)) /* DMA source address */
+#define BDMAC_DTAR(n)  		(BDMAC_BASE + (0x04 + (n) * 0x20)) /* DMA target address */
+#define BDMAC_DTCR(n)  		(BDMAC_BASE + (0x08 + (n) * 0x20)) /* DMA transfer count */
+#define BDMAC_DRSR(n)  		(BDMAC_BASE + (0x0c + (n) * 0x20)) /* DMA request source */
+#define BDMAC_DCCSR(n) 		(BDMAC_BASE + (0x10 + (n) * 0x20)) /* DMA control/status */
+#define BDMAC_DCMD(n)  		(BDMAC_BASE + (0x14 + (n) * 0x20)) /* DMA command */
+#define BDMAC_DDA(n)   		(BDMAC_BASE + (0x18 + (n) * 0x20)) /* DMA descriptor address */
+#define BDMAC_DSD(n)   		(BDMAC_BASE + (0x1c + (n) * 0x20)) /* DMA Stride Address */
+#define BDMAC_DNT(n)  		(BDMAC_BASE + (0xc0 + (n) * 0x04)) /* NAND Detect Timer */
+
+#define BDMAC_DMACR			(BDMAC_BASE + 0x0300) 	/* DMA control register */
+#define BDMAC_DMAIPR		(BDMAC_BASE + 0x0304) 	/* DMA interrupt pending */
+#define BDMAC_DMADBR		(BDMAC_BASE + 0x0308) 	/* DMA doorbell */
+#define BDMAC_DMADBSR		(BDMAC_BASE + 0x030C) 	/* DMA doorbell set */
+#define BDMAC_DMACKE  		(BDMAC_BASE + 0x0310)
+
+#define REG_BDMAC_DSAR(n)	REG32(BDMAC_DSAR((n)))
+#define REG_BDMAC_DTAR(n)	REG32(BDMAC_DTAR((n)))
+#define REG_BDMAC_DTCR(n)	REG32(BDMAC_DTCR((n)))
+#define REG_BDMAC_DRSR(n)	REG32(BDMAC_DRSR((n)))
+#define REG_BDMAC_DCCSR(n)	REG32(BDMAC_DCCSR((n)))
+#define REG_BDMAC_DCMD(n)	REG32(BDMAC_DCMD((n)))
+#define REG_BDMAC_DDA(n)	REG32(BDMAC_DDA((n)))
+#define REG_BDMAC_DSD(n)    REG32(BDMAC_DSD(n))
+#define REG_BDMAC_DNT(n)	REG32(BDMAC_DNT(n))
+
+#define REG_BDMAC_DMACR		REG32(BDMAC_DMACR)
+#define REG_BDMAC_DMAIPR	REG32(BDMAC_DMAIPR)
+#define REG_BDMAC_DMADBR	REG32(BDMAC_DMADBR)
+#define REG_BDMAC_DMADBSR	REG32(BDMAC_DMADBSR)
+#define REG_BDMAC_DMACKE    REG32(BDMAC_DMACKE)
+
+// BDMA request source register
+#define BDMAC_DRSR_RS_BIT	0
+  #define BDMAC_DRSR_RS_MASK	(0x3f << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_NAND	(1 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_BCH_ENC	(2 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_BCH_DEC	(3 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_AUTO	(8 << DMAC_DRSR_RS_BIT)
+  #define BDMAC_DRSR_RS_EXT	(12 << DMAC_DRSR_RS_BIT)
+
+// BDMA channel control/status register
+#define BDMAC_DCCSR_NDES	(1 << 31) /* descriptor (0) or not (1) ? */
+#define BDMAC_DCCSR_DES8    	(1 << 30) /* Descriptor 8 Word */
+#define BDMAC_DCCSR_DES4    	(0 << 30) /* Descriptor 4 Word */
+#define BDMAC_DCCSR_CDOA_BIT	16        /* copy of DMA offset address */
+  #define BDMAC_DCCSR_CDOA_MASK	(0xff << BDMACC_DCCSR_CDOA_BIT)
+#define BDMAC_DCCSR_BERR	(1 << 7)  /* BCH error within this transfer, Only for channel 0 */
+#define BDMAC_DCCSR_AR		(1 << 4)  /* address error */
+#define BDMAC_DCCSR_TT		(1 << 3)  /* transfer terminated */
+#define BDMAC_DCCSR_HLT		(1 << 2)  /* DMA halted */
+#define BDMAC_DCCSR_EN		(1 << 0)  /* channel enable bit */
+
+// BDMA channel command register
+#define BDMAC_DCMD_EACKS_LOW  	(1 << 31) /* External DACK Output Level Select, active low */
+#define BDMAC_DCMD_EACKS_HIGH  	(0 << 31) /* External DACK Output Level Select, active high */
+#define BDMAC_DCMD_EACKM_WRITE 	(1 << 30) /* External DACK Output Mode Select, output in write cycle */
+#define BDMAC_DCMD_EACKM_READ 	(0 << 30) /* External DACK Output Mode Select, output in read cycle */
+#define BDMAC_DCMD_ERDM_BIT	28        /* External DREQ Detection Mode Select */
+  #define BDMAC_DCMD_ERDM_MASK	(0x03 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_LOW	(0 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_FALL	(1 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_HIGH	(2 << BDMAC_DCMD_ERDM_BIT)
+  #define BDMAC_DCMD_ERDM_RISE	(3 << BDMAC_DCMD_ERDM_BIT)
+#define BDMAC_DCMD_BLAST	(1 << 25) /* BCH last */
+#define BDMAC_DCMD_SAI		(1 << 23) /* source address increment */
+#define BDMAC_DCMD_DAI		(1 << 22) /* dest address increment */
+#define BDMAC_DCMD_SWDH_BIT	14  /* source port width */
+  #define BDMAC_DCMD_SWDH_MASK	(0x03 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_32	(0 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_8	(1 << BDMAC_DCMD_SWDH_BIT)
+  #define BDMAC_DCMD_SWDH_16	(2 << BDMAC_DCMD_SWDH_BIT)
+#define BDMAC_DCMD_DWDH_BIT	12  /* dest port width */
+  #define BDMAC_DCMD_DWDH_MASK	(0x03 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_32	(0 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_8	(1 << BDMAC_DCMD_DWDH_BIT)
+  #define BDMAC_DCMD_DWDH_16	(2 << BDMAC_DCMD_DWDH_BIT)
+#define BDMAC_DCMD_DS_BIT	8  /* transfer data size of a data unit */
+  #define BDMAC_DCMD_DS_MASK	(0x07 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_32BIT	(0 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_8BIT	(1 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_16BIT	(2 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_16BYTE	(3 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_32BYTE	(4 << BDMAC_DCMD_DS_BIT)
+  #define BDMAC_DCMD_DS_64BYTE	(5 << BDMAC_DCMD_DS_BIT)
+#define BDMAC_DCMD_NRD   	(1 << 7)  /* NAND direct read */
+#define BDMAC_DCMD_NWR   	(1 << 6)  /* NAND direct write */
+#define BDMAC_DCMD_NAC   	(1 << 5)  /* NAND AL/CL enable */
+#define BDMAC_DCMD_STDE   	(1 << 2)  /* Stride Disable/Enable */
+#define BDMAC_DCMD_TIE		(1 << 1)  /* DMA transfer interrupt enable */
+#define BDMAC_DCMD_LINK		(1 << 0)  /* descriptor link enable */
+
+// BDMA descriptor address register
+#define BDMAC_DDA_BASE_BIT	12  /* descriptor base address */
+  #define BDMAC_DDA_BASE_MASK	(0x0fffff << BDMAC_DDA_BASE_BIT)
+#define BDMAC_DDA_OFFSET_BIT	4   /* descriptor offset address */
+  #define BDMAC_DDA_OFFSET_MASK	(0x0ff << BDMAC_DDA_OFFSET_BIT)
+
+// BDMA stride address register
+#define BDMAC_DSD_TSD_BIT	16	/* target stride address */
+  #define BDMAC_DSD_TSD_MASK	(0xffff << BDMAC_DSD_TSD_BIT)
+#define BDMAC_DSD_SSD_BIT	0	/* source stride address */
+  #define BDMAC_DSD_SSD_MASK	(0xffff << BDMAC_DSD_SSD_BIT)
+
+// BDMA NAND Detect timer register
+#define BDMAC_NDTCTIMER_EN	(1 << 15)  /* enable detect timer */
+#define BDMAC_TAILCNT_BIT	16
+
+// BDMA control register
+#define BDMAC_DMACR_PR_BIT	8	/* channel priority mode */
+  #define BDMAC_DMACR_PR_MASK	(0x03 << DMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_01_2	(0 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_12_0	(1 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_20_1	(2 << BDMAC_DMACR_PR_BIT)
+  #define BDMAC_DMACR_PR_012	(3 << BDMAC_DMACR_PR_BIT)
+#define BDMAC_DMACR_HLT		(1 << 3)  /* DMA halt flag */
+#define BDMAC_DMACR_AR		(1 << 2)  /* address error flag */
+#define BDMAC_DMACR_DMAE	(1 << 0)  /* DMA enable bit */
+
+// BDMA interrupt pending register
+#define BDMAC_DMAIPR_CIRQ2	(1 << 2)  /* irq pending status for channel 2 */
+#define BDMAC_DMAIPR_CIRQ1	(1 << 1)  /* irq pending status for channel 1 */
+#define BDMAC_DMAIPR_CIRQ0	(1 << 0)  /* irq pending status for channel 0 */
+
+// BDMA doorbell register
+#define BDMAC_DMADBR_DB2	(1 << 2)  /* doorbell for channel 2 */
+#define BDMAC_DMADBR_DB1	(1 << 1)  /* doorbell for channel 1 */
+#define BDMAC_DMADBR_DB0	(1 << 0)  /* doorbell for channel 0 */
+
+// BDMA doorbell set register
+#define BDMAC_DMADBSR_DBS2	(1 << 2)  /* enable doorbell for channel 2 */
+#define BDMAC_DMADBSR_DBS1	(1 << 1)  /* enable doorbell for channel 1 */
+#define BDMAC_DMADBSR_DBS0	(1 << 0)  /* enable doorbell for channel 0 */
+
+/* n is the DMA channel index (0 - 2) */
+
+#define __bdmac_test_halt_error ( REG_BDMAC_DMACR & BDMAC_DMACR_HLT )
+#define __bdmac_test_addr_error ( REG_BDMAC_DMACR & BDMAC_DMACR_AR )
+
+#define __bdmac_channel_enable_clk(n)           \
+	REG_BDMAC_DMACKE |= 1 << (n);
+
+#define __bdmac_enable_descriptor(n) \
+  ( REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_NDES )
+#define __bdmac_disable_descriptor(n) \
+  ( REG_BDMAC_DCCSR((n)) |= BDMAC_DCCSR_NDES )
+
+#define __bdmac_enable_channel(n)                 \
+do {                                             \
+	REG_BDMAC_DCCSR((n)) |= BDMAC_DCCSR_EN;    \
+} while (0)
+#define __bdmac_disable_channel(n)                \
+do {                                             \
+	REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_EN;   \
+} while (0)
+
+#define __bdmac_channel_enable_irq(n) \
+  ( REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_TIE )
+#define __bdmac_channel_disable_irq(n) \
+  ( REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_TIE )
+
+#define __bdmac_channel_transmit_halt_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_HLT )
+#define __bdmac_channel_transmit_end_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_TT )
+#define __bdmac_channel_address_error_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_AR )
+#define __bdmac_channel_count_terminated_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_CT )
+#define __bdmac_channel_descriptor_invalid_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_INV )
+#define __bdmac_BCH_error_detected(n) \
+  (  REG_BDMAC_DCCSR((n)) & BDMAC_DCCSR_BERR )
+
+#define __bdmac_channel_clear_transmit_halt(n)				\
+	do {								\
+		/* clear both channel halt error and globle halt error */ \
+		REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_HLT;			\
+		REG_BDMAC_DMACR &= ~BDMAC_DMACR_HLT;	\
+	} while (0)
+#define __bdmac_channel_clear_transmit_end(n) \
+  (  REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_TT )
+#define __bdmac_channel_clear_address_error(n)				\
+	do {								\
+		REG_BDMAC_DDA(n) = 0; /* clear descriptor address register */ \
+		REG_BDMAC_DSAR(n) = 0; /* clear source address register */ \
+		REG_BDMAC_DTAR(n) = 0; /* clear target address register */ \
+		/* clear both channel addr error and globle address error */ \
+		REG_BDMAC_DCCSR(n) &= ~BDMAC_DCCSR_AR;			\
+		REG_BDMAC_DMACR &= ~BDMAC_DMACR_AR;	\
+	} while (0)
+#define __bdmac_channel_clear_count_terminated(n) \
+  (  REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_CT )
+#define __bdmac_channel_clear_descriptor_invalid(n) \
+  (  REG_BDMAC_DCCSR((n)) &= ~BDMAC_DCCSR_INV )
+
+#define __bdmac_channel_set_transfer_unit_32bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_32BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_16bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_16BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_8bit(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_8BIT;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_16byte(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_16BYTE;	\
+} while (0)
+
+#define __bdmac_channel_set_transfer_unit_32byte(n)	\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DS_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DS_32BYTE;	\
+} while (0)
+
+/* w=8,16,32 */
+#define __bdmac_channel_set_dest_port_width(n,w)		\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DWDH_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DWDH_##w;	\
+} while (0)
+
+/* w=8,16,32 */
+#define __bdmac_channel_set_src_port_width(n,w)		\
+do {							\
+	REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_SWDH_MASK;	\
+	REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_SWDH_##w;	\
+} while (0)
+
+#define __bdmac_channel_dest_addr_fixed(n) \
+	(REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_DAI)
+#define __bdmac_channel_dest_addr_increment(n) \
+	(REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_DAI)
+
+#define __bdmac_channel_src_addr_fixed(n) \
+	(REG_BDMAC_DCMD((n)) &= ~BDMAC_DCMD_SAI)
+#define __bdmac_channel_src_addr_increment(n) \
+	(REG_BDMAC_DCMD((n)) |= BDMAC_DCMD_SAI)
+
+#define __bdmac_channel_set_doorbell(n)	\
+	(REG_BDMAC_DMADBSR = (1 << (n)))
+
+#define __bdmac_channel_irq_detected(n)  (REG_BDMAC_DMAIPR & (1 << (n)))
+#define __bdmac_channel_ack_irq(n)       (REG_BDMAC_DMAIPR &= ~(1 <<(n)))
+
 /*************************************************************************
  * DMAC (DMA Controller)
  *************************************************************************/
@@ -780,10 +1295,12 @@ static inline u32 jz_readl(u32 address)
 #define DMAC_DDA(n)   (DMAC_BASE + ((n)/HALF_DMA_NUM*0x100 + 0x18 + ((n)-(n)/HALF_DMA_NUM*HALF_DMA_NUM) * 0x20)) /* DMA descriptor address */
 #define DMAC_DSD(n)   (DMAC_BASE + ((n)/HALF_DMA_NUM*0x100 + 0xc0 + ((n)-(n)/HALF_DMA_NUM*HALF_DMA_NUM) * 0x04)) /* DMA Stride Address */
 
-#define DMAC_DMACR(m)	(DMAC_BASE + 0x0300 + 0x100 * m)              /* DMA control register */
-#define DMAC_DMAIPR(m)	(DMAC_BASE + 0x0304 + 0x100 * m)              /* DMA interrupt pending */
-#define DMAC_DMADBR(m)	(DMAC_BASE + 0x0308 + 0x100 * m)              /* DMA doorbell */
-#define DMAC_DMADBSR(m)	(DMAC_BASE + 0x030C + 0x100 * m)              /* DMA doorbell set */
+#define DMAC_DMACR(m)	(DMAC_BASE + 0x0300 + 0x100 * (m))              /* DMA control register */
+#define DMAC_DMAIPR(m)	(DMAC_BASE + 0x0304 + 0x100 * (m))              /* DMA interrupt pending */
+#define DMAC_DMADBR(m)	(DMAC_BASE + 0x0308 + 0x100 * (m))              /* DMA doorbell */
+#define DMAC_DMADBSR(m)	(DMAC_BASE + 0x030C + 0x100 * (m))              /* DMA doorbell set */
+#define DMAC_DMACKE(m)  (DMAC_BASE + 0x0310 + 0x100 * (m))
+
 
 #define REG_DMAC_DSAR(n)	REG32(DMAC_DSAR((n)))
 #define REG_DMAC_DTAR(n)	REG32(DMAC_DTAR((n)))
@@ -797,6 +1314,7 @@ static inline u32 jz_readl(u32 address)
 #define REG_DMAC_DMAIPR(m)	REG32(DMAC_DMAIPR(m))
 #define REG_DMAC_DMADBR(m)	REG32(DMAC_DMADBR(m))
 #define REG_DMAC_DMADBSR(m)	REG32(DMAC_DMADBSR(m))
+#define REG_DMAC_DMACKE(m)	REG32(DMAC_DMACKE(m))
 
 // DMA request source register
 #define DMAC_DRSR_RS_BIT	0
@@ -893,6 +1411,7 @@ static inline u32 jz_readl(u32 address)
   #define DMAC_DCMD_DS_16BIT	(2 << DMAC_DCMD_DS_BIT)
   #define DMAC_DCMD_DS_16BYTE	(3 << DMAC_DCMD_DS_BIT)
   #define DMAC_DCMD_DS_32BYTE	(4 << DMAC_DCMD_DS_BIT)
+  #define DMAC_DCMD_DS_64BYTE	(5 << DMAC_DCMD_DS_BIT)
 #define DMAC_DCMD_STDE   	(1 << 5) /* Stride Disable/Enable */
 #define DMAC_DCMD_DES_V		(1 << 4)  /* descriptor valid flag */
 #define DMAC_DCMD_DES_VM	(1 << 3)  /* descriptor valid mask: 1:support V-bit */
@@ -1773,6 +2292,17 @@ static inline u32 jz_readl(u32 address)
 #define REG_EMC_DMAR0	REG32(EMC_DMAR0)
 #define REG_EMC_DMAR1	REG32(EMC_DMAR1)
 
+#define EMC_PMEMPS0	(EMC_BASE + 0x6008)
+#define EMC_PMEMPS1	(EMC_BASE + 0x6004)
+#define EMC_PMEMPS2	(EMC_BASE + 0x600c)
+#define EMC_PMEMPS3	(EMC_BASE + 0x6010)
+ 
+#define REG_EMC_PMEMPS0	REG32(EMC_PMEMPS0)
+#define REG_EMC_PMEMPS1	REG32(EMC_PMEMPS1)
+#define REG_EMC_PMEMPS2	REG32(EMC_PMEMPS2)
+#define REG_EMC_PMEMPS3	REG32(EMC_PMEMPS3)
+
+
 /* DRAM Control Register */
 #define EMC_DMCR_BW_BIT		31
 #define EMC_DMCR_BW		(1 << EMC_DMCR_BW_BIT)
@@ -1891,36 +2421,91 @@ static inline u32 jz_readl(u32 address)
 #define EMC_DMAR_MASK_64_64	(0xfc << EMC_DMAR_MASK_BIT)  /*mask for two 64M SDRAM*/
 #define EMC_DMAR_MASK_128_128	(0xf8 << EMC_DMAR_MASK_BIT)  /*mask for two 128M SDRAM*/
 
+#define EMC_PMEMPS0_PDDQS_BIT               28
+ #define EMC_PMEMPS0_PDDQS                  (0xf << EMC_PMEMPS0_PDDQS_BIT)
+#define EMC_PMEMPS0_PDDQ_BIT                24
+ #define EMC_PMEMPS0_PDDQ                   (0xf << EMC_PMEMPS0_PDDQ_BIT)
+#define EMC_PMEMPS0_SCHMITT_TRIGGER_DQS_BIT 20
+ #define EMC_PMEMPS0_SCHMITT_TRIGGER_DQS    (0xf << EMC_PMEMPS0_SCHMITT_TRIGGER_DQS_BIT)
+#define EMC_PMEMPS0_SCHMITT_TRIGGER_DQ_BIT  16
+ #define EMC_PMEMPS0_SCHMITT_TRIGGER_DQ     (0xf << EMC_PMEMPS0_SCHMITT_TRIGGER_DQ_BIT)
+#define EMC_PMEMPS0_ENPULL_DQS_BIT          12
+ #define EMC_PMEMPS0_ENPULL_DQS             (0xf << EMC_PMEMPS0_ENPULL_DQS_BIT)
+#define EMC_PMEMPS0_ENPULL_DQ_BIT           8
+ #define EMC_PMEMPS0_ENPULL_DQ              (0xf << EMC_PMEMPS0_ENPULL_DQ_BIT)
+#define EMC_PMEMPS0_PULLUP_DQS_BIT          4
+ #define EMC_PMEMPS0_PULLUP_DQS             (0xf << EMC_PMEMPS0_PULLUP_DQS_BIT)
+#define EMC_PMEMPS0_PULLUP_DQ_BIT           0
+ #define EMC_PMEMPS0_PULLUP_DQ              (0xf << EMC_PMEMPS0_PULLUP_DQ_BIT)
+
+#define EMC_PMEMPS1_INEDQS_BIT               28
+ #define EMC_PMEMPS1_INEDQS                  (0xf << EMC_PMEMPS1_INEDQS_BIT)
+#define EMC_PMEMPS1_INEDQ_BIT                24
+ #define EMC_PMEMPS1_INEDQ                   (0xf << EMC_PMEMPS1_INEDQ_BIT)
+#define EMC_PMEMPS1_SSTL_MODE                (1 << 16)
+#define EMC_PMEMPS1_STRENGTH_DQS_BIT         8
+ #define EMC_PMEMPS1_STRENGTH_DQS_FULL       (0xff << EMC_PMEMPS1_STRENGTH_DQS_BIT)
+#define EMC_PMEMPS1_STRENGTH_DQ_BIT          0
+ #define EMC_PMEMPS1_STRENGTH_DQ_FULL        (0xff << EMC_PMEMPS1_STRENGTH_DQ_BIT)
+
+#define EMC_PMEMPS2_STRENGTH_CKO_BIT         18
+#define EMC_PMEMPS2_STRENGTH_CKE_BIT         16
+#define EMC_PMEMPS2_STRENGTH_ADDR_BIT        14
+#define EMC_PMEMPS2_STRENGTH_DM3_BIT         12
+#define EMC_PMEMPS2_STRENGTH_DM2_BIT         10
+#define EMC_PMEMPS2_STRENGTH_DM1_BIT         8
+#define EMC_PMEMPS2_STRENGTH_DM0_BIT         6
+#define EMC_PMEMPS2_STRENGTH_CMD_BIT         4
+#define EMC_PMEMPS2_STRENGTH_CS1_BIT         2
+#define EMC_PMEMPS2_STRENGTH_CS0_BIT         0
+
+#define EMC_PMEMPS2_STRENGTH_ALL_FULL        ((1 << 20) - 1)
+
+#define STRENGTH_SSTL18_REDUCED              1
+#define STRENGTH_SSTL18_FULL                 3
+#define STRENGTH_SSTL2_REDUCED               0
+#define STRENGTH_SSTL2_FULL                  2
+#define STRENGTH_LPDDR_REDUCED               0
+#define STRENGTH_LPDDR_FULL                  3
+#define STRENGTH_LVTTL_12MA_REDUCED          0
+#define STRENGTH_LVTTL_16MA_REDUCED          1
+#define STRENGTH_LVTTL_24MA_FULL             2
+#define STRENGTH_LVTTL_30MA_FULL             3
 
 /*************************************************************************
  * NEMC (External Normal Memory Controller)
  *************************************************************************/
 #define NEMC_BCR		(NEMC_BASE + 0x0)  /* BCR */
 
-#define NEMC_SMCR0	(NEMC_BASE + 0x10)  /* Static Memory Control Register 0 */
 #define NEMC_SMCR1	(NEMC_BASE + 0x14)  /* Static Memory Control Register 1 */
 #define NEMC_SMCR2	(NEMC_BASE + 0x18)  /* Static Memory Control Register 2 */
 #define NEMC_SMCR3	(NEMC_BASE + 0x1c)  /* Static Memory Control Register 3 */
 #define NEMC_SMCR4	(NEMC_BASE + 0x20)  /* Static Memory Control Register 4 */
-#define NEMC_SACR0	(NEMC_BASE + 0x30)  /* Static Memory Bank 0 Addr Config Reg */
+#define NEMC_SMCR5	(NEMC_BASE + 0x24)  /* Static Memory Control Register 5 */
+#define NEMC_SMCR6	(NEMC_BASE + 0x28)  /* Static Memory Control Register 6 */
 #define NEMC_SACR1	(NEMC_BASE + 0x34)  /* Static Memory Bank 1 Addr Config Reg */
 #define NEMC_SACR2	(NEMC_BASE + 0x38)  /* Static Memory Bank 2 Addr Config Reg */
 #define NEMC_SACR3	(NEMC_BASE + 0x3c)  /* Static Memory Bank 3 Addr Config Reg */
 #define NEMC_SACR4	(NEMC_BASE + 0x40)  /* Static Memory Bank 4 Addr Config Reg */
+#define NEMC_SACR5	(NEMC_BASE + 0x44)  /* Static Memory Bank 5 Addr Config Reg */
+#define NEMC_SACR6	(NEMC_BASE + 0x48)  /* Static Memory Bank 6 Addr Config Reg */
 
 #define NEMC_NFCSR	(NEMC_BASE + 0x050) /* NAND Flash Control/Status Register */
 
 #define REG_NEMC_BCR	REG32(NEMC_BCR)
-#define REG_NEMC_SMCR0	REG32(NEMC_SMCR0)
 #define REG_NEMC_SMCR1	REG32(NEMC_SMCR1)
 #define REG_NEMC_SMCR2	REG32(NEMC_SMCR2)
 #define REG_NEMC_SMCR3	REG32(NEMC_SMCR3)
 #define REG_NEMC_SMCR4	REG32(NEMC_SMCR4)
-#define REG_NEMC_SACR0	REG32(NEMC_SACR0)
+#define REG_NEMC_SMCR5	REG32(NEMC_SMCR5)
+#define REG_NEMC_SMCR6	REG32(NEMC_SMCR6)
 #define REG_NEMC_SACR1	REG32(NEMC_SACR1)
 #define REG_NEMC_SACR2	REG32(NEMC_SACR2)
 #define REG_NEMC_SACR3	REG32(NEMC_SACR3)
 #define REG_NEMC_SACR4	REG32(NEMC_SACR4)
+#define REG_NEMC_SACR5	REG32(NEMC_SACR5)
+#define REG_NEMC_SACR6	REG32(NEMC_SACR6)
+
 
 #define REG_NEMC_NFCSR	REG32(NEMC_NFCSR)
 
@@ -2118,6 +2703,7 @@ static inline u32 jz_readl(u32 address)
 #define DDRC_CTRL_RESET	(1 << 0) /* 0 End resetting ddrc_controller
 					    1 Resetting ddrc_controller */
 
+
 /* DDRC Load-Mode-Register */
 #define DDRC_LMR_DDR_ADDR_BIT	16 /* When performing a DDR command, DDRC_ADDR[13:0]
 					      corresponding to external DDR address Pin A[13:0] */
@@ -2218,8 +2804,8 @@ static inline u32 jz_readl(u32 address)
 #define DDR1_MRS_OM_BIT		7        /* Operating Mode */
 #define DDR1_MRS_OM_MASK	(0x3f << DDR1_MRS_OM_BIT) 
   #define DDR1_MRS_OM_NORMAL	(0 << DDR1_MRS_OM_BIT)
-  #define DDR1_MRS_OM_DLLRST	(1 << DDR1_MRS_OM_BIT)
   #define DDR1_MRS_OM_TEST	(1 << DDR1_MRS_OM_BIT)
+  #define DDR1_MRS_OM_DLLRST	(2 << DDR1_MRS_OM_BIT)
 #if 0
 #define DDR1_MRS_CAS_BIT	4        /* CAS Latency */
 #define DDR1_MRS_CAS_MASK	(7 << DDR1_MRS_CAS_BIT)
@@ -2310,6 +2896,8 @@ static inline u32 jz_readl(u32 address)
 #define DDRC_DQS_READY                (1 << 28) /* ahb_clk Delay Detect READY, read-only. */
 #define DDRC_DQS_AUTO                 (1 << 23) /* Hardware auto-detect & set delay line */
 #define DDRC_DQS_DET                  (1 << 24) /* Start delay detecting. */
+#define DDRC_DQS_SRDET                (1 << 25) /* Hardware auto-redetect & set delay line. */
+
 #define DDRC_DQS_CLKD_BIT             16 /* CLKD is reference value for setting WDQS and RDQS.*/
 #define DDRC_DQS_CLKD_MASK            (0x7f << DDRC_DQS_CLKD_BIT) 
 #define DDRC_DQS_WDQS_BIT             8  /* Set delay element number to write DQS delay-line. */
@@ -2338,6 +2926,18 @@ static inline u32 jz_readl(u32 address)
 #define DDRC_MMAP_MASK_128_128	(0xf8 << DDRC_MMAP_MASK_BIT)  /*mask for two 128M SDRAM*/
 #define DDRC_MMAP_MASK_256_256	(0xf0 << DDRC_MMAP_MASK_BIT)  /*mask for two 128M SDRAM*/
 
+
+
+#define DDRC_MDELAY_MAUTO_BIT (6)
+#define DDRC_MDELAY_MAUTO  (1 << DDRC_MDELAY_MAUTO_BIT)  
+
+#define DDR_GET_VALUE(x, y)			      \ 
+({						      \
+	unsigned long value, tmp;	              \
+	tmp = x * 1000;				      \
+	value = (tmp % y == 0) ? (tmp / y) : (tmp / y + 1); \
+		value;                                \
+})
 /*************************************************************************
  * CIM
  *************************************************************************/
@@ -3288,9 +3888,9 @@ static inline u32 jz_readl(u32 address)
 #define BCH_CNT_ENC_MASK         (0x7ff << BCH_CNT_ENC_BIT)
 
 /* BCH Error Report Register */
-#define BCH_ERR_INDEX_ODD_BIT    16
+#define BCH_ERR_INDEX_ODD_BIT    0
 #define BCH_ERR_INDEX_ODD_MASK   (0x1fff << BCH_ERR_INDEX_ODD_BIT)
-#define BCH_ERR_INDEX_EVEN_BIT   0
+#define BCH_ERR_INDEX_EVEN_BIT   16
 #define BCH_ERR_INDEX_EVEN_MASK  (0x1fff << BCH_ERR_INDEX_EVEN_BIT)
 
 //----------------------------------------------------------------------
@@ -3691,9 +4291,9 @@ do {		              						\
 	REG_GPIO_PXFUNS(0) = 0x002c00ff; /* SD0 ~ SD7, CS1#, FRE#, FWE# */ \
 	REG_GPIO_PXSELC(0) = 0x002c00ff;				\
 	REG_GPIO_PXPES(0) = 0x002c00ff;					\
-	REG_GPIO_PXFUNS(1) = 0x0000000c; /* CLE(SA2), ALE(SA3) */	\
-	REG_GPIO_PXSELC(1) = 0x0000000c;				\
-	REG_GPIO_PXPES(1) = 0x0000000c;					\
+	REG_GPIO_PXFUNS(1) = 0x00000003; /* CLE(SA2), ALE(SA3) */	\
+	REG_GPIO_PXSELC(1) = 0x00000003;				\
+	REG_GPIO_PXPES(1) = 0x00000003;					\
 									\
 	REG_GPIO_PXFUNS(0) = 0x00200000 << ((n)-1); /* CSn */		\
 	REG_GPIO_PXSELC(0) = 0x00200000 << ((n)-1);			\
@@ -3715,9 +4315,9 @@ do {		              						\
 	REG_GPIO_PXFUNS(0) = 0x002cffff; /* SD0 ~ SD15, CS1#, FRE#, FWE# */ \
 	REG_GPIO_PXSELC(0) = 0x002cffff;				\
 	REG_GPIO_PXPES(0) = 0x002cffff;					\
-	REG_GPIO_PXFUNS(1) = 0x0000000c; /* CLE(SA2), ALE(SA3) */	\
-	REG_GPIO_PXSELC(1) = 0x0000000c;				\
-	REG_GPIO_PXPES(1) = 0x0000000c;					\
+	REG_GPIO_PXFUNS(1) = 0x00000003; /* CLE(SA2), ALE(SA3) */	\
+	REG_GPIO_PXSELC(1) = 0x00000003;				\
+	REG_GPIO_PXPES(1) = 0x00000003;					\
 									\
 	REG_GPIO_PXFUNS(0) = 0x00200000 << ((n)-1); /* CSn */		\
 	REG_GPIO_PXSELC(0) = 0x00200000 << ((n)-1);			\
@@ -4197,18 +4797,25 @@ do {						\
 #define __cpm_get_pllod() \
 	((REG_CPM_CPPCR & CPM_CPPCR_PLLOD_MASK) >> CPM_CPPCR_PLLOD_BIT)
 
+#define __cpm_get_pll1m() \
+	((REG_CPM_CPPCR1 & CPM_CPPCR1_PLL1M_MASK) >> CPM_CPPCR1_PLL1M_BIT)
+#define __cpm_get_pll1n() \
+	((REG_CPM_CPPCR1 & CPM_CPPCR1_PLL1N_MASK) >> CPM_CPPCR1_PLL1N_BIT)
+#define __cpm_get_pll1od() \
+	((REG_CPM_CPPCR1 & CPM_CPPCR1_PLL1OD_MASK) >> CPM_CPPCR1_PLL1OD_BIT)
+
 #define __cpm_get_cdiv() \
 	((REG_CPM_CPCCR & CPM_CPCCR_CDIV_MASK) >> CPM_CPCCR_CDIV_BIT)
 #define __cpm_get_hdiv() \
 	((REG_CPM_CPCCR & CPM_CPCCR_HDIV_MASK) >> CPM_CPCCR_HDIV_BIT)
+#define __cpm_get_h2div() \
+	((REG_CPM_CPCCR & CPM_CPCCR_H2DIV_MASK) >> CPM_CPCCR_H2DIV_BIT)
 #define __cpm_get_pdiv() \
 	((REG_CPM_CPCCR & CPM_CPCCR_PDIV_MASK) >> CPM_CPCCR_PDIV_BIT)
 #define __cpm_get_mdiv() \
 	((REG_CPM_CPCCR & CPM_CPCCR_MDIV_MASK) >> CPM_CPCCR_MDIV_BIT)
-#define __cpm_get_h1div() \
-	((REG_CPM_CPCCR & CPM_CPCCR_H1DIV_MASK) >> CPM_CPCCR_H1DIV_BIT)
-#define __cpm_get_udiv() \
-	((REG_CPM_CPCCR & CPM_CPCCR_UDIV_MASK) >> CPM_CPCCR_UDIV_BIT)
+#define __cpm_get_sdiv() \
+	((REG_CPM_CPCCR & CPM_CPCCR_SDIV_MASK) >> CPM_CPCCR_SDIV_BIT)
 #define __cpm_get_i2sdiv() \
 	((REG_CPM_I2SCDR & CPM_I2SCDR_I2SDIV_MASK) >> CPM_I2SCDR_I2SDIV_BIT)
 #define __cpm_get_pixdiv() \
@@ -4217,8 +4824,10 @@ do {						\
 	((REG_CPM_MSCCDR(n) & CPM_MSCCDR_MSCDIV_MASK) >> CPM_MSCCDR_MSCDIV_BIT)
 #define __cpm_get_ssidiv() \
 	((REG_CPM_SSICCDR & CPM_SSICDR_SSICDIV_MASK) >> CPM_SSICDR_SSIDIV_BIT)
-#define __cpm_get_pcmdiv(v) \
+#define __cpm_get_pcmdiv() \
 	((REG_CPM_PCMCDR & CPM_PCMCDR_PCMCD_MASK) >> CPM_PCMCDR_PCMCD_BIT)
+#define __cpm_get_pll1div() \
+	((REG_CPM_CPPCR1 & CPM_CPCCR1_P1SDIV_MASK) >> CPM_CPCCR1_P1SDIV_BIT)
 
 #define __cpm_set_cdiv(v) \
 	(REG_CPM_CPCCR = (REG_CPM_CPCCR & ~CPM_CPCCR_CDIV_MASK) | ((v) << (CPM_CPCCR_CDIV_BIT)))
@@ -4236,12 +4845,32 @@ do {						\
 	(REG_CPM_I2SCDR = (REG_CPM_I2SCDR & ~CPM_I2SCDR_I2SDIV_MASK) | ((v) << (CPM_I2SCDR_I2SDIV_BIT)))
 #define __cpm_set_pixdiv(v) \
 	(REG_CPM_LPCDR = (REG_CPM_LPCDR & ~CPM_LPCDR_PIXDIV_MASK) | ((v) << (CPM_LPCDR_PIXDIV_BIT)))
-#define __cpm_set_mscdiv(n, v) \
-	(REG_CPM_MSCCDR(n) = (REG_CPM_MSCCDR(n) & ~CPM_MSCCDR_MSCDIV_MASK) | ((v) << (CPM_MSCCDR_MSCDIV_BIT)))
+#define __cpm_set_mscdiv(v) \
+	(REG_CPM_MSCCDR = (REG_CPM_MSCCDR & ~CPM_MSCCDR_MSCDIV_MASK) | ((v) << (CPM_MSCCDR_MSCDIV_BIT)))
 #define __cpm_set_ssidiv(v) \
 	(REG_CPM_SSICDR = (REG_CPM_SSICDR & ~CPM_SSICDR_SSIDIV_MASK) | ((v) << (CPM_SSICDR_SSIDIV_BIT)))
 #define __cpm_set_pcmdiv(v) \
 	(REG_CPM_PCMCDR = (REG_CPM_PCMCDR & ~CPM_PCMCDR_PCMCD_MASK) | ((v) << (CPM_PCMCDR_PCMCD_BIT)))
+#define __cpm_set_pll1div(v) \
+	(REG_CPM_CPPCR1 = (REG_CPM_CPPCR1 & ~CPM_CPCCR1_P1SDIV_MASK) | ((v) << (CPM_CPCCR1_P1SDIV_BIT)))
+
+#define __cpm_select_i2sclk_pll1() 	(REG_CPM_I2SCDR |= CPM_I2SCDR_I2PCS)
+#define __cpm_select_i2sclk_pll0()	(REG_CPM_I2SCDR &= ~CPM_I2SCDR_I2PCS)
+#define __cpm_select_otgclk_pll1() 	(REG_CPM_USBCDR |= CPM_USBCDR_UPCS)
+#define __cpm_select_otgclk_pll0()	(REG_CPM_USBCDR &= ~CPM_USBCDR_UPCS)
+#define __cpm_select_lcdpclk_pll1() 	(REG_CPM_LPCDR |= CPM_LPCDR_LPCS)
+#define __cpm_select_lcdpclk_pll0()	(REG_CPM_LPCDR &= ~CPM_LPCDR_LPCS)
+#define __cpm_select_uhcclk_pll1() 	(REG_CPM_UHCCDR |= CPM_UHCCDR_UHPCS)
+#define __cpm_select_uhcclk_pll0()	(REG_CPM_UHCCDR &= ~CPM_UHCCDR_UHPCS)
+#define __cpm_select_gpsclk_pll1() 	(REG_CPM_GPSCDR |= CPM_GPSCDR_GPCS)
+#define __cpm_select_gpsclk_pll0()	(REG_CPM_GPSCDR &= ~CPM_GPSCDR_GPCS)
+#define __cpm_select_pcmclk_pll1() 	(REG_CPM_PCMCDR |= CPM_PCMCDR_PCMPCS)
+#define __cpm_select_pcmclk_pll0()	(REG_CPM_PCMCDR &= ~CPM_PCMCDR_PCMPCS)
+#define __cpm_select_gpuclk_pll1() 	(REG_CPM_GPUCDR |= CPM_GPUCDR_GPCS)
+#define __cpm_select_gpuclk_pll0()	(REG_CPM_GPUCDR &= ~CPM_GPUCDR_GPCS)
+#define __cpm_select_clk_pll1() 	(REG_CPM_CDR |= CPM_CDR_PCS)
+#define __cpm_select_clk_pll0()	(REG_CPM_CDR &= ~CPM_CDR_PCS)
+
 
 #define __cpm_select_pcmclk_pll() 	(REG_CPM_PCMCDR |= CPM_PCMCDR_PCMS)
 #define __cpm_select_pcmclk_exclk() 	(REG_CPM_PCMCDR &= ~CPM_PCMCDR_PCMS)
@@ -4251,18 +4880,20 @@ do {						\
 #define __cpm_select_tveclk_pll()	(REG_CPM_LPCDR &= ~CPM_LPCDR_LSCS)
 #define __cpm_select_pixclk_lcd()	(REG_CPM_LPCDR &= ~CPM_LPCDR_LTCS)
 #define __cpm_select_pixclk_tve()	(REG_CPM_LPCDR |= CPM_LPCDR_LTCS)
-#define __cpm_select_i2sclk_exclk()	(REG_CPM_CPCCR &= ~CPM_CPCCR_I2CS)
-#define __cpm_select_i2sclk_pll()	(REG_CPM_CPCCR |= CPM_CPCCR_I2CS)
-#define __cpm_select_usbclk_exclk()	(REG_CPM_CPCCR &= ~CPM_CPCCR_UCS)
-#define __cpm_select_usbclk_pll()	(REG_CPM_CPCCR |= CPM_CPCCR_UCS)
+#define __cpm_select_i2sclk_exclk()	(REG_CPM_I2SCDR &= ~CPM_I2SCDR_I2CS)
+#define __cpm_select_i2sclk_pll()	(REG_CPM_I2SCDR |= CPM_I2SCDR_I2CS)
+//#define __cpm_select_usbclk_exclk()	(REG_CPM_CPCCR &= ~CPM_CPCCR_UCS)
+//#define __cpm_select_usbclk_pll()	(REG_CPM_CPCCR |= CPM_CPCCR_UCS)
 
 #define __cpm_enable_cko()
 #define __cpm_exclk_direct()		(REG_CPM_CPCCR &= ~CPM_CPCCR_ECS)
 #define __cpm_exclk_div2()             	(REG_CPM_CPCCR |= CPM_CPCCR_ECS)
 #define __cpm_enable_pll_change()	(REG_CPM_CPCCR |= CPM_CPCCR_CE)
-#define __cpm_pllout_direct()		(REG_CPM_CPCCR |= CPM_CPCCR_PCS)
+
 #define __cpm_pllout_div2()		(REG_CPM_CPCCR &= ~CPM_CPCCR_PCS)
 #define __cpm_pll_enable()		(REG_CPM_CPPCR |= CPM_CPPCR_PLLEN)
+
+#define __cpm_pll1_enable()		(REG_CPM_CPPCR1 |= CPM_CPPCR1_PLL1EN)
 
 #define __cpm_pll_is_off()		(REG_CPM_CPPSR & CPM_CPPSR_PLLOFF)
 #define __cpm_pll_is_on()		(REG_CPM_CPPSR & CPM_CPPSR_PLLON)
@@ -4279,61 +4910,101 @@ do {						\
 #define __cpm_sleep_mode() \
 	(REG_CPM_LCR = (REG_CPM_LCR & ~CPM_LCR_LPM_MASK) | CPM_LCR_LPM_SLEEP)
 
-#define __cpm_stop_all() 	(REG_CPM_CLKGR = 0x1fffffff)
-#define __cpm_stop_cimram()	(REG_CPM_CLKGR |= CPM_CLKGR_CIMRAM)
-#define __cpm_stop_idct()	(REG_CPM_CLKGR |= CPM_CLKGR_IDCT)
-#define __cpm_stop_db()	        (REG_CPM_CLKGR |= CPM_CLKGR_DB)
-#define __cpm_stop_me()	        (REG_CPM_CLKGR |= CPM_CLKGR_ME)
-#define __cpm_stop_mc()	        (REG_CPM_CLKGR |= CPM_CLKGR_MC)
-#define __cpm_stop_tve()        (REG_CPM_CLKGR |= CPM_CLKGR_TVE)
-#define __cpm_stop_tssi()       (REG_CPM_CLKGR |= CPM_CLKGR_TSSI)
-#define __cpm_stop_owi()        (REG_CPM_CLKGR |= CPM_CLKGR_OWI)
-#define __cpm_stop_pcm()        (REG_CPM_CLKGR |= CPM_CLKGR_PCM)
-#define __cpm_stop_uart3()	(REG_CPM_CLKGR |= CPM_CLKGR_UART3)
-#define __cpm_stop_uart2()	(REG_CPM_CLKGR |= CPM_CLKGR_UART2)
-#define __cpm_stop_uart1()	(REG_CPM_CLKGR |= CPM_CLKGR_UART1)
-#define __cpm_stop_ipu()	(REG_CPM_CLKGR |= CPM_CLKGR_IPU)
-#define __cpm_stop_dmac()	(REG_CPM_CLKGR |= CPM_CLKGR_DMAC)
-#define __cpm_stop_udc()	(REG_CPM_CLKGR |= CPM_CLKGR_UDC)
-#define __cpm_stop_lcd()	(REG_CPM_CLKGR |= CPM_CLKGR_LCD)
-#define __cpm_stop_cim()	(REG_CPM_CLKGR |= CPM_CLKGR_CIM)
-#define __cpm_stop_sadc()	(REG_CPM_CLKGR |= CPM_CLKGR_SADC)
-#define __cpm_stop_msc(n)	(REG_CPM_CLKGR |= CPM_CLKGR_MSC##n)
-#define __cpm_stop_aic1()	(REG_CPM_CLKGR |= CPM_CLKGR_AIC1)
-#define __cpm_stop_aic2()	(REG_CPM_CLKGR |= CPM_CLKGR_AIC2)
-#define __cpm_stop_ssi(n)	(REG_CPM_CLKGR |= CPM_CLKGR_SSI##n)
-#define __cpm_stop_i2c()	(REG_CPM_CLKGR |= CPM_CLKGR_I2C)
-#define __cpm_stop_rtc()	(REG_CPM_CLKGR |= CPM_CLKGR_RTC)
-#define __cpm_stop_tcu()	(REG_CPM_CLKGR |= CPM_CLKGR_TCU)
-#define __cpm_stop_uart0()	(REG_CPM_CLKGR |= CPM_CLKGR_UART0)
+#define __cpm_stop_all() 	\
+	do {\
+		(REG_CPM_CLKGR0 = 0xffffffff);\
+		(REG_CPM_CLKGR1 = 0x3ff);\
+	}while(0)
+#define __cpm_stop_emc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_EMC)
+#define __cpm_stop_ddr()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_DDR)
+#define __cpm_stop_ipu()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_IPU)
+#define __cpm_stop_lcd()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_LCD)
+#define __cpm_stop_tve()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_TVE)
+#define __cpm_stop_Cim()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_CIM)
+#define __cpm_stop_mdma()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_MDMA)
+#define __cpm_stop_uhc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_UHC)
+#define __cpm_stop_mac()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_MAC)
+#define __cpm_stop_gps()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_GPS)
+#define __cpm_stop_dmac()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_DMAC)
+#define __cpm_stop_ssi2()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_SSI2)
+#define __cpm_stop_ssi1()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_SSI1)
+#define __cpm_stop_uart3()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_UART3)
+#define __cpm_stop_uart2()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_UART2)
+#define __cpm_stop_uart1()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_UART1)
+#define __cpm_stop_uart0()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_UART0)
+#define __cpm_stop_sadc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_SADC)
+#define __cpm_stop_kbc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_KBC)
+#define __cpm_stop_msc2()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_MSC2)
+#define __cpm_stop_msc1()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_MSC1)
+#define __cpm_stop_owi()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_OWI)
+#define __cpm_stop_tssi()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_TSSI)
+#define __cpm_stop_aic()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_AIC)
+#define __cpm_stop_scc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_SCC)
+#define __cpm_stop_i2c0()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_I2C1)
+#define __cpm_stop_i2c1()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_I2C0)
+#define __cpm_stop_ssi0()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_SSI0)
+#define __cpm_stop_msc0()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_MSC0)
+#define __cpm_stop_otg()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_OTG)
+#define __cpm_stop_bch()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_BCH)
+#define __cpm_stop_nemc()	(REG_CPM_CLKGR0 |= CPM_CLKGR0_NEMC)
+#define __cpm_stop_gpu()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_GPU)
+#define __cpm_stop_pcm()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_PCM)
+#define __cpm_stop_ahb1()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_AHB1)
+#define __cpm_stop_cabac()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_CABAC)
+#define __cpm_stop_sram()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_SRAM)
+#define __cpm_stop_dct()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_DCT)
+#define __cpm_stop_me()		(REG_CPM_CLKGR1 |= CPM_CLKGR0_ME)
+#define __cpm_stop_dblk()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_DBLK)
+#define __cpm_stop_mc()		(REG_CPM_CLKGR1 |= CPM_CLKGR0_MC)
+#define __cpm_stop_bdma()	(REG_CPM_CLKGR1 |= CPM_CLKGR0_BDMA)
 
-#define __cpm_start_all() 	(REG_CPM_CLKGR = 0x0)
-#define __cpm_start_cimram()	(REG_CPM_CLKGR &= ~CPM_CLKGR_CIMRAM)
-#define __cpm_start_idct()	(REG_CPM_CLKGR &= ~CPM_CLKGR_IDCT)
-#define __cpm_start_db()        (REG_CPM_CLKGR &= ~CPM_CLKGR_DB)
-#define __cpm_start_me()        (REG_CPM_CLKGR &= ~CPM_CLKGR_ME)
-#define __cpm_start_mc()        (REG_CPM_CLKGR &= ~CPM_CLKGR_MC)
-#define __cpm_start_tve()        (REG_CPM_CLKGR &= ~CPM_CLKGR_TVE)
-#define __cpm_start_tssi()       (REG_CPM_CLKGR &= ~CPM_CLKGR_TSSI)
-#define __cpm_start_owi()        (REG_CPM_CLKGR &= ~CPM_CLKGR_OWI)
-#define __cpm_start_pcm()        (REG_CPM_CLKGR &= ~CPM_CLKGR_PCM)
-#define __cpm_start_uart3()	(REG_CPM_CLKGR &= ~CPM_CLKGR_UART3)
-#define __cpm_start_uart2()	(REG_CPM_CLKGR &= ~CPM_CLKGR_UART2)
-#define __cpm_start_uart1()	(REG_CPM_CLKGR &= ~CPM_CLKGR_UART1)
-#define __cpm_start_ipu()	(REG_CPM_CLKGR &= ~CPM_CLKGR_IPU)
-#define __cpm_start_dmac()	(REG_CPM_CLKGR &= ~CPM_CLKGR_DMAC)
-#define __cpm_start_udc()	(REG_CPM_CLKGR &= ~CPM_CLKGR_UDC)
-#define __cpm_start_lcd()	(REG_CPM_CLKGR &= ~CPM_CLKGR_LCD)
-#define __cpm_start_cim()	(REG_CPM_CLKGR &= ~CPM_CLKGR_CIM)
-#define __cpm_start_sadc()	(REG_CPM_CLKGR &= ~CPM_CLKGR_SADC)
-#define __cpm_start_msc(n)	(REG_CPM_CLKGR &= ~CPM_CLKGR_MSC##n)
-#define __cpm_start_aic1()	(REG_CPM_CLKGR &= ~CPM_CLKGR_AIC1)
-#define __cpm_start_aic2()	(REG_CPM_CLKGR &= ~CPM_CLKGR_AIC2)
-#define __cpm_start_ssi(n)	(REG_CPM_CLKGR &= ~CPM_CLKGR_SSI##n)
-#define __cpm_start_i2c()	(REG_CPM_CLKGR &= ~CPM_CLKGR_I2C)
-#define __cpm_start_rtc()	(REG_CPM_CLKGR &= ~CPM_CLKGR_RTC)
-#define __cpm_start_tcu()	(REG_CPM_CLKGR &= ~CPM_CLKGR_TCU)
-#define __cpm_start_uart0()	(REG_CPM_CLKGR &= ~CPM_CLKGR_UART0)
+#define __cpm_start_all() 	\
+	do {\
+		REG_CPM_CLKGR0 = 0x0;\
+		REG_CPM_CLKGR1 = 0x0;\
+	} while(0)
+#define __cpm_start_emc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_EMC)
+#define __cpm_start_ddr()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_DDR)
+#define __cpm_start_ipu()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_IPU)
+#define __cpm_start_lcd()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_LCD)
+#define __cpm_start_tve()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_TVE)
+#define __cpm_start_Cim()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_CIM)
+#define __cpm_start_mdma()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_MDMA)
+#define __cpm_start_uhc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_UHC)
+#define __cpm_start_mac()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_MAC)
+#define __cpm_start_gps()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_GPS)
+#define __cpm_start_dmac()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_DMAC)
+#define __cpm_start_ssi2()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_SSI2)
+#define __cpm_start_ssi1()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_SSI1)
+#define __cpm_start_uart3()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_UART3)
+#define __cpm_start_uart2()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_UART2)
+#define __cpm_start_uart1()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_UART1)
+#define __cpm_start_uart0()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_UART0)
+#define __cpm_start_sadc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_SADC)
+#define __cpm_start_kbc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_KBC)
+#define __cpm_start_msc2()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_MSC2)
+#define __cpm_start_msc1()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_MSC1)
+#define __cpm_start_owi()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_OWI)
+#define __cpm_start_tssi()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_TSSI)
+#define __cpm_start_aic()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_AIC)
+#define __cpm_start_scc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_SCC)
+#define __cpm_start_i2c0()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_I2C1)
+#define __cpm_start_i2c1()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_I2C0)
+#define __cpm_start_ssi0()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_SSI0)
+#define __cpm_start_msc0()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_MSC0)
+#define __cpm_start_otg()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_OTG)
+#define __cpm_start_bch()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_BCH)
+#define __cpm_start_nemc()	(REG_CPM_CLKGR0 &= ~CPM_CLKGR0_NEMC)
+#define __cpm_start_gpu()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_GPU)
+#define __cpm_start_pcm()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_PCM)
+#define __cpm_start_ahb1()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_AHB1)
+#define __cpm_start_cabac()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_CABAC)
+#define __cpm_start_sram()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_SRAM)
+#define __cpm_start_dct()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_DCT)
+#define __cpm_start_me()		(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_ME)
+#define __cpm_start_dblk()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_DBLK)
+#define __cpm_start_mc()		(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_MC)
+#define __cpm_start_bdma()	(REG_CPM_CLKGR1 &= ~CPM_CLKGR0_BDMA)
 
 #define __cpm_get_o1st() \
 	((REG_CPM_OPCR & CPM_OPCR_O1ST_MASK) >> CPM_OPCR_O1ST_BIT)
@@ -4357,12 +5028,33 @@ static __inline__ unsigned int __cpm_get_pllout(void)
 {
 	unsigned long m, n, no, pllout;
 	unsigned long cppcr = REG_CPM_CPPCR;
-	unsigned long od[4] = {1, 2, 2, 4};
-	if ((cppcr & CPM_CPPCR_PLLEN) && !(cppcr & CPM_CPPCR_PLLBP)) {
-		m = __cpm_get_pllm() + 2;
-		n = __cpm_get_plln() + 2;
+	unsigned long od[4] = {1, 2, 4, 8};
+	if ((cppcr & CPM_CPPCR_PLLEN) && (!(cppcr & CPM_CPPCR_PLLBP))) {
+		m = __cpm_get_pllm() * 2;
+		n = __cpm_get_plln();
 		no = od[__cpm_get_pllod()];
-		pllout = ((JZ_EXTAL) / (n * no)) * m;
+		pllout = ((JZ_EXTAL) * m / (n * no));
+	} else
+		pllout = JZ_EXTAL;
+	return pllout;
+}
+
+/* PLL output frequency */
+static __inline__ unsigned int __cpm_get_pll1out(void)
+{
+	unsigned long m, n, no, pllout;
+	unsigned long cppcr1 = REG_CPM_CPPCR1;
+	unsigned long od[4] = {1, 2, 4, 8};
+	if (cppcr1 & CPM_CPPCR1_PLL1EN)
+	{
+		m = __cpm_get_pll1m() * 2;
+		n = __cpm_get_pll1n();
+		no = od[__cpm_get_pll1od()];
+		if (cppcr1 & CPM_CPPCR1_P1SCS)
+			pllout = ((__cpm_get_pllout()) * m / (n * no));
+		else
+			pllout = ((JZ_EXTAL) * m / (n * no));
+			
 	} else
 		pllout = JZ_EXTAL;
 	return pllout;
@@ -4380,7 +5072,7 @@ static __inline__ unsigned int __cpm_get_pllout2(void)
 /* CPU core clock */
 static __inline__ unsigned int __cpm_get_cclk(void)
 {
-	int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
+	int div[] = {1, 2, 3, 4, 6, 8};
 
 	return __cpm_get_pllout() / div[__cpm_get_cdiv()];
 }
@@ -4388,7 +5080,7 @@ static __inline__ unsigned int __cpm_get_cclk(void)
 /* AHB system bus clock */
 static __inline__ unsigned int __cpm_get_hclk(void)
 {
-	int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
+	int div[] = {1, 2, 3, 4, 6, 8};
 
 	return __cpm_get_pllout() / div[__cpm_get_hdiv()];
 }
@@ -4396,7 +5088,7 @@ static __inline__ unsigned int __cpm_get_hclk(void)
 /* Memory bus clock */
 static __inline__ unsigned int __cpm_get_mclk(void)
 {
-	int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
+	int div[] = {1, 2, 3, 4, 6, 8};
 
 	return __cpm_get_pllout() / div[__cpm_get_mdiv()];
 }
@@ -4404,15 +5096,17 @@ static __inline__ unsigned int __cpm_get_mclk(void)
 /* APB peripheral bus clock */
 static __inline__ unsigned int __cpm_get_pclk(void)
 {
-	int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32};
+	int div[] = {1, 2, 3, 4, 6, 8};
 
 	return __cpm_get_pllout() / div[__cpm_get_pdiv()];
 }
 
 /* AHB1 module clock */
-static __inline__ unsigned int __cpm_get_h1clk(void)
+static __inline__ unsigned int __cpm_get_h2clk(void)
 {
-	return __cpm_get_pllout2() / (__cpm_get_h1div() + 1);
+	int div[] = {1, 2, 3, 4, 6, 8};
+
+	return __cpm_get_pllout() / div[__cpm_get_h2div()];
 }
 
 /* LCD pixel clock */
@@ -4424,7 +5118,7 @@ static __inline__ unsigned int __cpm_get_pixclk(void)
 /* I2S clock */
 static __inline__ unsigned int __cpm_get_i2sclk(void)
 {
-	if (REG_CPM_CPCCR & CPM_CPCCR_I2CS) {
+	if (REG_CPM_I2SCDR & CPM_I2SCDR_I2CS) {
 		return __cpm_get_pllout2() / (__cpm_get_i2sdiv() + 1);
 	}
 	else {
@@ -4433,6 +5127,7 @@ static __inline__ unsigned int __cpm_get_i2sclk(void)
 }
 
 /* USB clock */
+/*
 static __inline__ unsigned int __cpm_get_usbclk(void)
 {
 	if (REG_CPM_CPCCR & CPM_CPCCR_UCS) {
@@ -4442,7 +5137,7 @@ static __inline__ unsigned int __cpm_get_usbclk(void)
 		return JZ_EXTAL;
 	}
 }
-
+*/
 /* EXTAL clock for UART,I2C,SSI,TCU,USB-PHY */
 static __inline__ unsigned int __cpm_get_extalclk(void)
 {
@@ -4471,7 +5166,7 @@ static inline void __cpm_select_msc_clk(int n, int sd)
 		div = pllout2 / 16000000;
 	}
 
-	REG_CPM_MSCCDR(n) = div - 1;
+	REG_CPM_MSCCDR = div - 1;
 	REG_CPM_CPCCR |= CPM_CPCCR_CE;
 }
 #endif
@@ -5909,7 +6604,11 @@ do {							\
  * RTC ops
  ***************************************************************************/
 
-#define __rtc_write_ready()  ( REG_RTC_RCR & RTC_RCR_WRDY )
+#define __rtc_write_ready()  	(REG_RTC_RCR & RTC_RCR_WRDY)
+#define __rtc_write_enabled() 	(REG_RTC_WENR & RTC_WENR_WEN)
+#define __rtc_write_enable() 	(REG_RTC_WENR |= (0xA55A << RTC_WENR_WENPAT_BIT))
+#define __rtc_write_disable() 	(REG_RTC_WENR &= ~RTC_WENR_WENPAT_MASK)
+
 #define __rtc_enabled()      \
 do{                          \
       while(!__rtc_write_ready());  \

@@ -22,6 +22,7 @@
 #
 
 include $(TOPDIR)/config.mk
+include $(TOPDIR)/include/config.mk
 
 LIB	= $(obj)lib$(CPU).a
 
@@ -30,7 +31,30 @@ COBJS	= jz4730.o jz4740.o jz5730.o jz_lcd.o jz4740_slcd.o jz4750_lcd.o jz_serial
 	  asc_serial.o au1x00_serial.o au1x00_eth.o au1x00_usb_ohci.o \
 	  cpu.o interrupts.o incaip_clock.o jz_mmc.o jz4730_nand.o jz4740_cpm_test.o \
 	  jz5730_nand.o jz4740_nand.o jz4750_nand.o jz_cs8900.o jz4750.o jz4750_mmc.o \
-          jz4760.o jz4760_nand.o jz4760_eth.o
+	  jz4810.o jz4810_nand.o jz4810_eth.o
+
+ifeq ($(CONFIG_CPU_TYPE),4760)
+COBJS	+= jz4760.o jz4760_nand.o jz4760_eth.o
+endif
+
+ifeq ($(CONFIG_USE_MDDR),y)
+COBJS	+= jz4760_ddr.o
+COBJS	+= jz_mddr_init.o
+endif
+
+ifeq ($(CONFIG_USE_DDR1),y)
+COBJS	+= jz4760_ddr.o
+COBJS	+= jz_ddr1_init.o
+endif
+
+ifeq ($(CONFIG_USE_DDR2),y)
+COBJS	+= jz4760_ddr.o
+COBJS	+= jz_ddr2_init.o
+endif
+
+ifeq ($(CONFIG_USE_SDRAM),y)
+COBJS	+= jz4760_sdram.o
+endif
 
 SOBJS	= incaip_wdt.o cache.o
 
