@@ -23,24 +23,10 @@
 #include <asm/mipsregs.h>
 #include <asm/jz4760.h>
 
-static void gpio_init(void)
+static void nand_gpio_init(void)
 {
 	/* For ethernet data line init */
 	__gpio_as_nand_16bit(1);
-
-
-	/*
-	 * Initialize UART1 pins
-	 */
-#if CFG_UART_BASE == UART0_BASE
-	__gpio_as_uart0();
-#elif CFG_UART_BASE == UART1_BASE
-	__gpio_as_uart1();
-#elif CFG_UART_BASE == UART2_BASE
-	__gpio_as_uart2();
-#else /* CFG_UART_BASE == UART1_BASE */
-	__gpio_as_uart3();
-#endif
 }
 
 //----------------------------------------------------------------------
@@ -60,7 +46,7 @@ void board_early_init(void)
 		while(i--);
 	}
 #endif
-	gpio_init();
+	nand_gpio_init();
 }
 
 

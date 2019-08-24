@@ -296,7 +296,7 @@ static inline u32 jz_readl(u32 address)
 
 #define REG_CPM_RSR	REG32(CPM_RSR)
 
-
+#define CPM_CPCCR_ECS    (1 << 30) /* Select the between EXCLK and EXCLK/2 output*/
 /* Clock Control Register */
 #define CPM_CPCCR_I2CS		(1 << 31)
 #define CPM_CPCCR_CLKOEN	(1 << 30)

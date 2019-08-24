@@ -41,7 +41,8 @@ SECTIONS
 	. = ALIGN(4);
 	.sdata  : { *(.sdata) }
 
-	_gp = ALIGN(16);
+	. = ALIGN(16);
+	_gp = .;
 
 	__got_start = .;
 	.got  : { *(.got) }

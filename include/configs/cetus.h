@@ -56,6 +56,7 @@
 
 #define CFG_CPU_SPEED		378000000	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL/256) /* incrementer freq */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 #define CFG_UART_BASE  		UART1_BASE	/* Base of the UART channel */
 

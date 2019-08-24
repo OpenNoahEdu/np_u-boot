@@ -31,6 +31,7 @@
 #define CONFIG_LEPUS		1  /* cygnus validation board */
 #define CONFIG_JZSOC		1  /* Jz SoC */
 #define CONFIG_JZ4760		1  /* Jz4760 SoC */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 /* memory group */
 #include "asm/jz_mem_nand_configs/DDR2_H5PS1G63EFR-G7C.h"
@@ -42,6 +43,7 @@
 #define CFG_EXTAL		(12 * 1000000)	/* EXTAL freq: 12MHz */
 #define CFG_CPU_SPEED		(480 * 1000000)	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL / 256) /* incrementer freq */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 /* this must be included AFTER CFG_EXTAL and CFG_CPU_SPEED */
 #include "jz4760_common.h"

@@ -40,6 +40,7 @@
 #define CFG_EXTAL		(12 * 1000000)	/* EXTAL freq: 12MHz */
 #define CFG_CPU_SPEED		(533 * 1000000)	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL/256) /* incrementer freq */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 /* this must be included AFTER CFG_EXTAL and CFG_CPU_SPEED */
 #include "jz4760_common.h"

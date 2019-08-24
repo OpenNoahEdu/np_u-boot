@@ -32,23 +32,17 @@
 #define CONFIG_JZSOC		1  /* Jz SoC */
 #define CONFIG_JZ4760		1  /* Jz4760 SoC */
 
-// [MAY CHANGE] MDDR, EDD20163ABH5BL-SF
-//#include "asm/jz_mem_nand_configs/MDDR_EDD20163ABH5BL-SF.h"
-//              MDDR, K4X1G163PE-FGC6
-//#include "asm/jz_mem_nand_configs/MDDR_K4X1G163PE-FGC6.h"
-//              MDDR, K4X1G163PE-FGC6
 #include "asm/jz_mem_nand_configs/MDDR_H5MS1G62MFP-J3M.h"
+//#include "asm/jz_mem_nand_configs/NAND_K9G8G08U0A.h"  /*2K page nandflash*/
+#include "asm/jz_mem_nand_configs/NAND_H27U8G8T2BTR.h" /*4K page nandflash*/
 
-// [MAY CHANGE] NAND, K9LBG08U0E
-//#include "asm/jz_mem_nand_configs/NAND_K9LBG08U0E.h"
-//              NAND, K9LBG08U0E
-#include "asm/jz_mem_nand_configs/NAND_K9G8G08U0A.h"
 
 #define JZ4760_NORBOOT_CFG	JZ4760_NORBOOT_8BIT	/* NOR Boot config code */
 
 #define CFG_EXTAL		(12 * 1000000)	/* EXTAL freq: 12MHz */
-#define CFG_CPU_SPEED		(420 * 1000000)	/* CPU clock */
+#define CFG_CPU_SPEED		(528 * 1000000)	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL/256) /* incrementer freq */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 /* this must be included AFTER CFG_EXTAL and CFG_CPU_SPEED */
 #include "jz4760_common.h"
@@ -71,7 +65,7 @@
 #include <cmd_confdefs.h>
 
 // [MAY CHANGE] Boot Arguments
-#define CONFIG_BOOTDELAY	1
+#define CONFIG_BOOTDELAY	0
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
 #define CONFIG_BOOTARGS		"mem=192M console=ttyS1,57600n8 ip=off root=/dev/ram0 rw rdinit=/init"
 #define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x2600000 0x300000;bootm"

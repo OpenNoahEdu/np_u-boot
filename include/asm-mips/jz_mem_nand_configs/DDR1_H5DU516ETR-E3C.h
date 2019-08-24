@@ -10,7 +10,7 @@
 /* Chip Select */
 #define DDR_CS1EN 0 // CSEN : whether a ddr chip exists 0 - un-used, 1 - used
 #define DDR_CS0EN 1
-#define DDR_DW32 0 /* 0 - 16-bit data width, 1 - 32-bit data width */
+#define DDR_DW32 1 /* 0 - 16-bit data width, 1 - 32-bit data width */
 
 /* DDR1 paramters */
 #define DDR_ROW 13 /* ROW : 12 to 14 row address */

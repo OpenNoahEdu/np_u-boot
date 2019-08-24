@@ -26,6 +26,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <config.h>
+
 #define CONFIG_MIPS32		1  /* MIPS32 CPU core */
 #define CONFIG_JzRISC		1  /* JzRISC core */
 #define CONFIG_LEPUS		1  /* cygnus validation board */
@@ -34,6 +36,7 @@
 
 /* memory group */
 #include "asm/jz_mem_nand_configs/DDR2_H5PS1G63EFR-G7C.h"
+//#include "asm/jz_mem_nand_configs/DDR1_H5DU516ETR-E3C.h"
 // [MAY CHANGE] NAND
 #include "asm/jz_mem_nand_configs/NAND_K9GAG08U0M.h"
 
@@ -42,6 +45,7 @@
 #define CFG_EXTAL		(12 * 1000000)	/* EXTAL freq: 12MHz */
 #define CFG_CPU_SPEED		(528 * 1000000)	/* CPU clock */
 #define	CFG_HZ			(CFG_EXTAL / 256) /* incrementer freq */
+#define CFG_PLL1_FRQ    (240 * 1000000) /* PLL1_FRQ */
 
 /* this must be included AFTER CFG_EXTAL and CFG_CPU_SPEED */
 #include "jz4760_common.h"
@@ -56,6 +60,7 @@
 #define CONFIG_COMMANDS		(CONFIG_CMD_DFL | \
 				 CFG_CMD_ASKENV | \
 				 CFG_CMD_NAND   | \
+				 CFG_CMD_MSC    | \
 				 CFG_CMD_DHCP	| \
 				 CFG_CMD_PING)
 #define CONFIG_BOOTP_MASK	( CONFIG_BOOTP_DEFAUL )
@@ -66,11 +71,17 @@
 // [MAY CHANGE] Boot Arguments
 #define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
-//#define CONFIG_BOOTARGS		"mem=192M console=ttyS1,57600n8 ip=192.168.2.128:192.168.3.56:192.168.1.1:255.255.248.0 ethaddr=00:2a:c6:7a:ac:de nfsroot=192.168.3.56:/nfsroot/root26 rw"
-//#define CONFIG_BOOTARGS		"mem=256M console=ttyS1,57600n8 ip=off root=/dev/ram0 rw rdinit=/init"
+
+#ifdef CONFIG_ANDROID
+#define CONFIG_BOOTARGS		"mem=192M console=ttyS1,57600n8 ip=off root=/dev/ram0 rw rdinit=/init"
+#define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x2600000 0x300000;bootm"
+#else
+//#define CONFIG_BOOTARGS	"mem=256M console=ttyS1,57600n8 ip=192.168.2.128:192.168.3.56:192.168.1.1:255.255.248.0 ethaddr=00:2a:c6:7a:ac:de nfsroot=192.168.3.56:/nfsroot/root26 rw"
 #define CONFIG_BOOTARGS		"mem=256M console=ttyS1,57600n8 ip=off rootfstype=yaffs2 root=/dev/mtdblock2 rw"
 //#define CONFIG_BOOTCOMMAND	"tftp;bootm"
 #define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
+#endif
+
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
 #define CONFIG_NET_MULTI
@@ -122,8 +133,10 @@
 /*-----------------------------------------------------------------------
  * Environment
  *----------------------------------------------------------------------*/
-#if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_NAND_SPL)
+#if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_NAND_SPL) && !defined(CONFIG_MSC_U_BOOT) && !defined(CONFIG_MSC_SPL)
 #define CFG_ENV_IS_IN_FLASH     1	/* use FLASH for environment vars	*/
+#elif defined(CONFIG_MSC_U_BOOT)
+#define CFG_ENV_IS_IN_MSC       1
 #else
 #define CFG_ENV_IS_IN_NAND	1	/* use NAND for environment vars	*/
 #endif
@@ -176,6 +189,38 @@
 #define CFG_ENV_OFFSET		(CFG_NAND_U_BOOT_OFFS + CFG_NAND_U_BOOT_SIZE)	/* environment starts here  */
 #define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_NAND_BLOCK_SIZE)
 #endif
+
+/*
+ * IPL (Initial Program Loader, integrated inside CPU)
+ * Will load first 8k from MSC (SPL) into cache and execute it from there.
+ *
+ * SPL (Secondary Program Loader)
+ * Will load special U-Boot version (MSUB) from MSC and execute it. This SPL
+ * has to fit into 8kByte. It sets up the CPU and configures the SDRAM
+ * controller and the MSC controller so that the special U-Boot image can be
+ * loaded from MSC to SDRAM.
+ *
+ * MSUB (MMC/SD U-Boot)
+ * This MSC U-Boot (MSUB) is a special U-Boot version which can be started
+ * from RAM. Therefore it mustn't (re-)configure the SDRAM controller.
+ *
+ */
+#define CFG_MSC_U_BOOT_DST	0x80100000	/* Load MSUB to this addr	 */
+#define CFG_MSC_U_BOOT_START	CFG_MSC_U_BOOT_DST /* Start MSUB from this addr */
+
+/*
+ * Define the partitioning of the MMC/SD card (only RAM U-Boot is needed here)
+ */
+#define CFG_MSC_U_BOOT_OFFS	(16 << 10)	/* Offset to RAM U-Boot image	*/
+#define CFG_MSC_U_BOOT_SIZE	(256 << 10)	/* Size of RAM U-Boot image	*/
+
+#define CFG_MSC_BLOCK_SIZE	512 
+
+#ifdef CFG_ENV_IS_IN_MSC
+#define CFG_ENV_SIZE		CFG_MSC_BLOCK_SIZE
+#define CFG_ENV_OFFSET		((CFG_MSC_BLOCK_SIZE * 16) + CFG_MSC_U_BOOT_SIZE + (CFG_MSC_BLOCK_SIZE * 16))	/* environment starts here  */
+#endif
+
 
 /*-----------------------------------------------------------------------
  * SPI NOR FLASH configuration

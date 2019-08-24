@@ -32,11 +32,7 @@ extern void serial_put_hex(unsigned int  d);
 extern void sdram_init(void);
 
 #ifndef CONFIG_FPGA
-/*
- * M = PLLM * 2, N = PLLN
- * NO = 2 ^ OD
- *
- */
+
 void pll_init(void)
 {
 	register unsigned int cfcr, plcr1;
@@ -51,6 +47,7 @@ void pll_init(void)
 	int div[6] = {1, 2, 4, 4, 4, 4};
 	//int div[6] = {1, 2, 2, 2, 2, 2};
 	int pllout2;
+	int gpuclk = 240000000;
 
 	cfcr = 	CPM_CPCCR_PCS |
 		(n2FR[div[0]] << CPM_CPCCR_CDIV_BIT) |
@@ -97,6 +94,23 @@ void pll_init(void)
 	serial_puts("REG_CPM_CPPCR = ");
 	serial_put_hex(REG_CPM_CPPCR);
 */
+}
+/*
+ * M = PLLM * 2, N = PLLN
+ * NO = 2 ^ OD
+ *
+ */
+void pll_1_init(void)
+{
+	register unsigned int plcr1;
+
+	/* set CPM_CPCCR_MEM only for ddr1 or ddr2 */
+	plcr1 = CPCCR1_M_N_OD | CPM_CPPCR1_PLL1EN;
+
+	/* init PLL_1 , source clock is extal clock */
+	REG_CPM_CPPCR1 = plcr1;
+	__cpm_enable_pll_change();
+	while (!(REG_CPM_CPPCR1 & CPM_CPPCR1_PLL1S));
 }
 #endif /* ifndef CONFIG_FPGA */
 
@@ -232,6 +246,9 @@ int jz_board_init(void)
 
 #ifndef CONFIG_FPGA
 	pll_init();          /* init PLL, do it when nor boot or defined(CONFIG_MSC_U_BOOT) */
+#if 1 // #ifdef CFG_PLL1_FRQ
+	pll_1_init();          /* init PLL1, used for controllers who carefor it. */
+#endif
 #endif /* ifndef CONFIG_FPGA */
 
 #if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_SPI_U_BOOT) && !defined(CONFIG_MSC_U_BOOT)

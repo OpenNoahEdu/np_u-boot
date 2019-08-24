@@ -346,25 +346,57 @@ static void nand_load(int offs, int uboot_size, unsigned char *dst)
 	__nand_disable();
 }
 
+void enable_uart_RX_pull_up(void)
+{
+	//UART0
+	REG_GPIO_PXPEC(32 * 5 + 0);
+
+	//UART1
+	REG_GPIO_PXPEC(32 * 3 + 26);
+
+        //UART2
+	REG_GPIO_PXPEC(32 * 2 + 28);
+
+        //UART3
+	REG_GPIO_PXPEC(32 * 3 + 12);
+}
+
+void enable_certain_pull_down(void)
+{
+	int i;
+
+	for(i = 4; i < 12; i++)
+		REG_GPIO_PXPEC(32 * 5 + i);
+}
+
 static void gpio_init(void)
 {
-	/*
-	 * Initialize UART3 pins
-	 */
 	switch (CFG_UART_BASE) {
 	case UART0_BASE:
 		__gpio_as_uart0();
+		__cpm_start_uart0();
 		break;
 	case UART1_BASE:
 		__gpio_as_uart1();
+		__cpm_start_uart1();
 		break;
 	case UART2_BASE:
 		__gpio_as_uart2();
+		__cpm_start_uart2();
 		break;
 	case UART3_BASE:
 		__gpio_as_uart3();
+		__cpm_start_uart3();
 		break;
+
 	}
+
+	// This function can avoid UART floating, but should not call if UART will be in high frequency.
+	enable_uart_RX_pull_up();
+
+	// This function pulls down the certain GPIO
+	enable_certain_pull_down();
+
 #ifdef CONFIG_FPGA
 	__gpio_as_nor();
 
@@ -396,7 +428,6 @@ void spl_boot(void)
 	 */
 
         //__cpm_start_all();
-	__cpm_start_uart1();
 	__cpm_start_mdma();
 //	__cpm_start_bdma();
 	__cpm_start_emc();
@@ -418,20 +449,28 @@ void spl_boot(void)
 #ifndef CONFIG_FPGA
 
 #ifndef CONFIG_MOBILE_SDRAM
+
 	REG_EMC_PMEMPS0 = EMC_PMEMPS0_PDDQ | EMC_PMEMPS0_PDDQS |
 		EMC_PMEMPS0_SCHMITT_TRIGGER_DQ | EMC_PMEMPS0_SCHMITT_TRIGGER_DQS;
-#ifdef CONFIG_SDRAM_DDR2
-//	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE |
-//		EMC_PMEMPS1_STRENGTH_DQS_FULL | EMC_PMEMPS1_STRENGTH_DQ_FULL;
-	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE;
-#else /* ifdef CONFIG_SDRAM_DDR2 */
+
+#if defined(CONFIG_SDRAM_DDR1)
+	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE |
+		EMC_PMEMPS1_STRENGTH_DQS_HALF_DDR1;
+	REG_EMC_PMEMPS2 = EMC_PMEMPS2_STRENGTH_ALL_HALF_DDR1;
+#elif defined(CONFIG_SDRAM_DDR2)
+	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS | EMC_PMEMPS1_SSTL_MODE |
+		EMC_PMEMPS1_STRENGTH_DQS_HALF_DDR2;
+	REG_EMC_PMEMPS2 = EMC_PMEMPS2_STRENGTH_ALL_HALF_DDR2;
+#else
 	REG_EMC_PMEMPS1 = EMC_PMEMPS1_INEDQ | EMC_PMEMPS1_INEDQS |
-		EMC_PMEMPS1_STRENGTH_DQS_FULL | EMC_PMEMPS1_STRENGTH_DQ_FULL;
-#endif /* ifdef CONFIG_SDRAM_DDR2 */
-	REG_EMC_PMEMPS2 = EMC_PMEMPS2_STRENGTH_ALL_FULL;
+		EMC_PMEMPS1_STRENGTH_DQS_HALF_MDDR;
+	REG_EMC_PMEMPS2 = EMC_PMEMPS2_STRENGTH_ALL_HALF_MDDR;
+#endif
+
 #endif /* ifndef CONFIG_MOBILE_SDRAM */
 
 #endif /* ifndef CONFIG_FPGA */
+
 	sdram_init();
 
 	bus_width = (CFG_NAND_BW8==1) ? 8 : 16;

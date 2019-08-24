@@ -46,7 +46,7 @@ void ddr_mem_init(int msel, int hl, int tsel, int arg)
 	REG_DDRC_MDELAY = init_ddrc_mdelay | DDRC_MDELAY_MAUTO;
 
 	/***** init ddrc registers & ddr memory regs ****/
-	/* Wait for number of auto-refresh cycles */
+	/* wait for clock stable */
 	tmp_cnt = (cpu_clk / 1000000) * 10;
 	while (tmp_cnt--);
 
@@ -57,7 +57,7 @@ void ddr_mem_init(int msel, int hl, int tsel, int arg)
 	tmp_cnt = (cpu_clk / 1000000) * 1;
 	while (tmp_cnt--);
 
-	/* PREA  all */
+	/* precharge all */
 	REG_DDRC_LMR =  DDRC_LMR_CMD_PREC | DDRC_LMR_START; //0x1;
 
 	/* Wait for DDR_tRP */
@@ -68,24 +68,41 @@ void ddr_mem_init(int msel, int hl, int tsel, int arg)
 	REG_DDRC_LMR = (DDR1_EMRS_OM_NORMAL | DDR1_EMRS_DS_FULL | DDR1_EMRS_DLL_EN) << 16
 		| DDRC_LMR_BA_N_EMRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
 
-	/* MR DLL reset */
-	REG_DDRC_LMR = (DDR1_MRS_OM_DLLRST | (DDR_CL_HALF?(DDR_CL | 0x4):DDR_CL) << 4 | DDR_MRS_BL_4) << 16
+	/* MR: mode register: reset DLL */
+	REG_DDRC_LMR = (DDR1_MRS_OM_DLLRST | ((DDR_CL_HALF?(DDR_CL | 0x4):DDR_CL) << 4) | DDR_MRS_BL_4) << 16
 		| DDRC_LMR_BA_N_MRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
 
 	/* wait DDR_tXSRD, 200 tCK */
 	tmp_cnt = (cpu_clk / 1000000) * 2;
 	while (tmp_cnt--);
 
-	/* PREA all */
+	/* precharge all */
 	REG_DDRC_LMR =  DDRC_LMR_CMD_PREC | DDRC_LMR_START; //0x1;
-	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
-	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
-	tmp_cnt = (cpu_clk / 1000000) * 15;
-	while (tmp_cnt--);
-	/* EMR: extend mode register, clear dll en */
-	REG_DDRC_LMR = (DDR1_EMRS_OM_NORMAL | DDR1_EMRS_DS_FULL) << 16
-		| DDRC_LMR_BA_N_EMRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
-	/* wait DDR_tMRD */
+
+	/* Wait for DDR_tRP */
 	tmp_cnt = (cpu_clk / 1000000) * 1;
 	while (tmp_cnt--);
+
+	/* two auto-refresh */
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+
+	/* Wait for DDR_tRFC */
+	tmp_cnt = (cpu_clk / 1000000) * 1; /* 1us */
+	while (tmp_cnt--);
+
+	REG_DDRC_LMR = DDRC_LMR_CMD_AUREF | DDRC_LMR_START; //0x11;
+
+	/* Wait for DDR_tRFC */
+	tmp_cnt = (cpu_clk / 1000000) * 1; /* 1us */
+	while (tmp_cnt--);
+
+	/* MR: mode register */
+	REG_DDRC_LMR = (((DDR_CL_HALF?(DDR_CL | 0x4):DDR_CL) << 4) | DDR_MRS_BL_4) << 16
+		| DDRC_LMR_BA_N_MRS | DDRC_LMR_CMD_LMR | DDRC_LMR_START;
+
+	/* wait DDR_tMRD */
+	tmp_cnt = (cpu_clk / 1000000) * 2;
+	while (tmp_cnt--);
+
+	/* the DDR SDRAM is ready for normal operation */
 }

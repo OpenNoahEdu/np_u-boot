@@ -22,7 +22,7 @@
  * MDDR controller timing1 register
  */
 #define DDR_tRAS 42 /*tRAS: ACTIVE to PRECHARGE command period to the same bank. */
-#define DDR_tRTP 12 /* 7.5ns READ to PRECHARGE command period. */
+#define DDR_tRTP 1 /* 7.5ns READ to PRECHARGE command period. */
 #define DDR_tRP 18 /* tRP: PRECHARGE command period to the same bank */
 #define DDR_tRCD 18 /* ACTIVE to READ or WRITE command period to the same bank. */
 #define DDR_tRC 60 /* ACTIVE to ACTIVE command period to the same bank.*/

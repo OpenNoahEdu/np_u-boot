@@ -1,3 +1,11 @@
+2010-08-05 Wolfgang Wang <lgwang@ingenic.cn>
+	Add pll1 init for jz4760.
+
+	Changed files:
+	include/asm-mips/jz4760.h
+	include/configs/jz4760_common.h
+	cpu/mips/jz4760.c
+
 2010-04-30 Wolfgang Wang <lgwang@ingenic.cn>
 
 	Fix a large memory bug(); "lib_mips/board.c" add "#include <asm/jzsoc.h>"

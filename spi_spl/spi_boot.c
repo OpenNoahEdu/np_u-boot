@@ -265,11 +265,17 @@ void spl_boot(void)
 	/*
 	 * Init hardware
 	 */
-	__cpm_start_all();
+	__cpm_start_uart1();
+	__cpm_start_mdma();
+	__cpm_start_emc();
+	__cpm_start_ddr();
+
+	/* enable mdmac's clock */
+	REG_MDMAC_DMACKE = 0x3;
 	gpio_init();
 	serial_init();
 
-	serial_puts("\n\nSPI Secondary Program Loader\n\n");
+	serial_puts("\n\n SPI Secondary Program Loader\n\n");
 
 #ifndef CONFIG_FPGA
 	pll_init();

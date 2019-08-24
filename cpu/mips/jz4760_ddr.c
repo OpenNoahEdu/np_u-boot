@@ -151,7 +151,7 @@ static int dma_check_result(void *src, void *dst, int size,int print_flag)
 		ddst = REG32(addr2);
 		if ((dsrc != data_expect)
 		    || (ddst != data_expect)) {
-#if 1
+#if 0
 			serial_puts("wrong data at:");
 			serial_put_hex(addr2);
 			serial_puts("data:");
@@ -210,6 +210,8 @@ static int ddr_dma_test(int print_flag)
 
 	banks = (DDR_BANK8 ? 8 : 4) *(DDR_CS0EN + DDR_CS1EN);
 	memsize = initdram(0);
+	if (memsize > EMC_LOW_SDRAM_SPACE_SIZE)
+		memsize = EMC_LOW_SDRAM_SPACE_SIZE;
 	//dprintf("memsize = 0x%08x\n", memsize);
 	banksize = memsize/banks;
 	testsize = 4096;
@@ -296,7 +298,7 @@ void sdram_init(void)
 	ns = 7;
 #else
 	mem_clk = __cpm_get_mclk();
-	ps = 1000000000 / mem_clk * 1000; /* ns per tck ns <= real value */
+	ps = 1000000000 / (mem_clk / 1000); /* ns per tck ns <= real value */
 	//ns = 1000000000 / mem_clk; /* ns per tck ns <= real value */
 #endif /* if defined(CONFIG_FPGA) */
 
@@ -307,7 +309,7 @@ void sdram_init(void)
 	//tmp = (DDR_tRAS % ns == 0) ? (DDR_tRAS / ps) : (DDR_tRAS / ps + 1);
 	if (tmp < 1) tmp = 1;
 	if (tmp > 31) tmp = 31;
-	ddrc_timing1_reg = (((tmp - 1) / 2) << DDRC_TIMING1_TRAS_BIT);
+	ddrc_timing1_reg = (((tmp) / 2) << DDRC_TIMING1_TRAS_BIT);
 
 	/* READ to PRECHARGE command period. */
 	tmp = DDR_GET_VALUE(DDR_tRTP, ps);
@@ -379,7 +381,8 @@ void sdram_init(void)
 	tmp = DDR_tMINSR;
 	if (tmp < 9) tmp = 9;
 	if (tmp > 129) tmp = 129;
-	ddrc_timing2_reg |= (((tmp - 1)/8 - 1) << DDRC_TIMING2_TMINSR_BIT);
+	tmp = ((tmp - 1)%8 == 0) ? ((tmp - 1)/8-1) : ((tmp - 1)/8);
+	ddrc_timing2_reg |= (tmp << DDRC_TIMING2_TMINSR_BIT);
 	ddrc_timing2_reg |= (DDR_tXP - 1) << 4 | (DDR_tMRD - 1);
 
 	init_ddrc_refcnt = DDR_CLK_DIV << 1 | DDRC_REFCNT_REF_EN;
@@ -637,6 +640,10 @@ __convert:
 	REG_DDRC_TIMING1 = ddrc_timing1_reg;
 	REG_DDRC_TIMING2 = ddrc_timing2_reg;
 
+	// James
+	//REG_DDRC_DQS_ADJ = 0x2621;
+	REG_DDRC_DQS_ADJ = 0x2321;
+
 	ddr_mem_init(msel, hl, tsel, quar);
 #endif /* if defined(CONFIG_FPGA) */
 
@@ -650,6 +657,7 @@ __convert:
 	ddrc_mmap0_reg = mem_base0 << DDRC_MMAP_BASE_BIT | mem_mask0;
 	ddrc_mmap1_reg = mem_base1 << DDRC_MMAP_BASE_BIT | mem_mask1;
 
+	// james
 	REG_DDRC_MMAP0 = ddrc_mmap0_reg;
 	REG_DDRC_MMAP1 = ddrc_mmap1_reg;
 	REG_DDRC_REFCNT = init_ddrc_refcnt;
