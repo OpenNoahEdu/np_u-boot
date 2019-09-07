@@ -81,7 +81,7 @@
 
 #define CONFIG_BOOTDELAY	1
 #define CONFIG_BOOTFILE	        "uImage"	/* file to load */
-#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,57600n8 ip=off rootfstype=yaffs2 root=/dev/mtdblock2 rw"
+#define CONFIG_BOOTARGS		"mem=64M console=ttyS0,57600n8 ip=off rootfstype=yaffs2 root=/dev/mtdblock3 rw"
 #define CONFIG_BOOTCOMMAND	"nand read 0x80600000 0x400000 0x300000;bootm"
 #define CFG_AUTOLOAD		"n"		/* No autoload */
 
